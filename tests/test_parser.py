@@ -42,11 +42,11 @@ class TestDocumentsParser(unittest.TestCase):
 
 class TestArticlesParser(unittest.TestCase):
 
-    def _test(self, string, document, numbers):
+    def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
         self.assertEqual(len(result['articles']), 1)
         self.assertEqual(result['articles'][0],
-                         {'document': document, 'numbers': numbers})
+                         {'parent': parent, 'numbers': numbers})
 
     def test_single(self):
         self._test('dos SSMJ previstos no artigo 3º.',
@@ -72,10 +72,10 @@ class TestArticlesParser(unittest.TestCase):
 
 class TestNumbersParser(unittest.TestCase):
 
-    def _test(self, string, article, numbers):
+    def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
         self.assertEqual(len(result['numbers']), 1)
-        self.assertEqual({'article': article, 'numbers': numbers},
+        self.assertEqual({'parent': parent, 'numbers': numbers},
                          result['numbers'][0])
 
     def test_single(self):
@@ -88,34 +88,34 @@ class TestNumbersParser(unittest.TestCase):
 
     def test_with_article(self):
         self._test('no nº 2 do artigo seguinte',
-                   {'document': None, 'numbers': [Token('seguinte')]},
+                   {'parent': None, 'numbers': [Token('seguinte')]},
                    [Token('2')])
 
         self._test('nos n.os 2 e 3 do artigo seguinte',
-                   {'document': None, 'numbers': [Token('seguinte')]},
+                   {'parent': None, 'numbers': [Token('seguinte')]},
                    [Token('2'), Token('3')])
 
         self._test('nos n.os 1, 2 e 3 do artigo seguinte',
-                   {'document': None, 'numbers': [Token('seguinte')]},
+                   {'parent': None, 'numbers': [Token('seguinte')]},
                    [Token('1'), Token('2'), Token('3')])
 
         self._test('no nº 2 do artigo 26º',
-                   {'document': None, 'numbers': [Token('26º')]},
+                   {'parent': None, 'numbers': [Token('26º')]},
                    [Token('2')])
 
     def test_with_document(self):
         self._test('no nº 2 do artigo 26º do Decreto-Lei 2/2013,',
-                   {'document': {'type_name': Token('Decreto-Lei'),
-                                 'numbers': [Token('2/2013')]},
+                   {'parent': {'type_name': Token('Decreto-Lei'),
+                               'numbers': [Token('2/2013')]},
                     'numbers': [Token('26º')]},
                    [Token('2')])
 
 
 class TestLines(unittest.TestCase):
-    def _test(self, string, parent, lines):
+    def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
         self.assertEqual(len(result['lines']), 1)
-        self.assertEqual({'parent': parent, 'lines': lines},
+        self.assertEqual({'parent': parent, 'numbers': numbers},
                          result['lines'][0])
 
     def test_single(self):
@@ -145,26 +145,26 @@ class TestLines(unittest.TestCase):
     def test_with_number(self):
 
         self._test('referido na alínea f) do nº 4.',
-                   {'article': None, 'numbers': [Token('4')]},
+                   {'parent': None, 'numbers': [Token('4')]},
                    [Token('f)')])
 
         self._test('referido nas alíneas f) e g) do nº anterior.',
-                   {'article': None, 'numbers': [Token('anterior')]},
+                   {'parent': None, 'numbers': [Token('anterior')]},
                    [Token('f)'), Token('g)')])
 
         self._test('referido nas alíneas f) e g) do artigo anterior.',
-                   {'document': None, 'numbers': [Token('anterior')]},
+                   {'parent': None, 'numbers': [Token('anterior')]},
                    [Token('f)'), Token('g)')])
 
         self._test('referido nas alíneas f) e g) do artigo 26º',
-                   {'document': None, 'numbers': [Token('26º')]},
+                   {'parent': None, 'numbers': [Token('26º')]},
                    [Token('f)'), Token('g)')])
 
     def test_with_document(self):
         self._test('referido nas alíneas f) e g) do nº 4 do artigo 26º '
                    'do Decreto-Lei nº 2/2013',
-                   {'article': {'document': {'type_name': Token('Decreto-Lei'),
-                                             'numbers': [Token('2/2013')]},
-                                'numbers': [Token('26º')]},
+                   {'parent': {'parent': {'type_name': Token('Decreto-Lei'),
+                                          'numbers': [Token('2/2013')]},
+                               'numbers': [Token('26º')]},
                     'numbers': [Token('4')]},
                    [Token('f)'), Token('g)')])

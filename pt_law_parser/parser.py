@@ -28,13 +28,13 @@ def parse(string, singular_names, plural_names):
     doc_storage = {'type_name': None, 'numbers': []}
     doc_reference = Reference('', '')
     doc_ref_storage = [doc_reference]
-    art_storage = {'numbers': [], 'document': None}
+    art_storage = {'numbers': [], 'parent': None}
     art_reference = ArticleReference('')
     art_ref_storage = [art_reference]
-    num_storage = {'numbers': [], 'article': None}
+    num_storage = {'numbers': [], 'parent': None}
     num_reference = NumberReference('')
     num_ref_storage = [num_reference]
-    lin_storage = {'lines': [], 'parent': None}
+    lin_storage = {'numbers': [], 'parent': None}
     lin_reference = LineReference('')
     lin_ref_storage = [lin_reference]
 
@@ -130,7 +130,7 @@ def parse(string, singular_names, plural_names):
                 lin_reference = lin_ref_storage[-1]
             lin_reference.index = index
             lin_reference.number = token
-            lin_storage['lines'].append(token)
+            lin_storage['numbers'].append(token)
 
         # checker
         check_doc_format(token)
@@ -155,7 +155,7 @@ def parse(string, singular_names, plural_names):
         if number_state.isstate('single') and \
                 (token == '' or article_state.isstate('single')):
             if article_state.isstate('single'):
-                num_storage['article'] = art_storage
+                num_storage['parent'] = art_storage
 
             for ref in num_ref_storage:
                 if article_state.isstate('single'):
@@ -166,7 +166,7 @@ def parse(string, singular_names, plural_names):
             storage['numbers'].append(num_storage)
 
             number_state.clear()
-            num_storage = {'numbers': [], 'article': None}
+            num_storage = {'numbers': [], 'parent': None}
             num_reference = NumberReference('')
             num_ref_storage = [num_reference]
             logger.debug('changed to number.%s' % number_state.current)
@@ -174,7 +174,7 @@ def parse(string, singular_names, plural_names):
         if article_state.isstate('single') and \
                 (token == '' or document_state.isstate('single')):
             if document_state.isstate('single'):
-                art_storage['document'] = doc_storage
+                art_storage['parent'] = doc_storage
 
             for ref in art_ref_storage:
                 if document_state.isstate('single'):
@@ -191,10 +191,11 @@ def parse(string, singular_names, plural_names):
             logger.debug('changed to article.%s' % article_state.current)
 
         if document_state.isstate('single') and token == '':
-            storage['documents'].append(doc_storage)
             for ref in doc_ref_storage:
                 result[ref.index] = ref
                 del ref.index
+
+            storage['documents'].append(doc_storage)
 
             document_state.clear()
             doc_storage = {'type_name': None, 'numbers': []}
