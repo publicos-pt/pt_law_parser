@@ -4,7 +4,7 @@ import logging
 from fysom import Fysom
 
 from .tokenizer import tokenize
-from .expressions import Separator, Expression, Reference, ArticleReference,\
+from .expressions import Separator, Expression, DocumentReference, ArticleReference,\
     NumberReference, LineReference
 
 
@@ -12,6 +12,48 @@ DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d+(?:/[A-Z]*)?$'
 ARTICLE_NUMBER_REGEX = '^[\dA-Z\-]+º(?:\-[A-Z]+)?$|^anterior$|^seguinte$'
 NUMBER_REGEX = '^\d$|^anterior$|^seguinte$'
 LINE_REGEX = '^[\da-z]*\)$'
+
+
+class TempStorage(object):
+    def __init__(self, ref_class):
+        self.ref_class = ref_class
+        self.storage = {'numbers': [], 'parent': None}
+        self.reference = self.ref_class('')
+        self.ref_storage = [self.reference]
+
+    def new_number(self, token, index):
+        if self.reference.number:
+            self.ref_storage.append(self.ref_class(''))
+            self.reference = self.ref_storage[-1]
+        self.reference.index = index
+        self.reference.number = token
+        self.storage['numbers'].append(token)
+
+    def clear(self):
+        self.storage = {'numbers': [], 'parent': None}
+        self.reference = self.ref_class('')
+        self.ref_storage = [self.reference]
+
+    def set_parent(self, temp_parent):
+        assert isinstance(temp_parent, TempStorage)
+        self.storage['parent'] = temp_parent.storage
+        for ref in self.ref_storage:
+            ref.parent = temp_parent.reference
+
+
+class DocTempStorage(TempStorage):
+    def __init__(self):
+        self._parent = None
+        super(DocTempStorage, self).__init__(DocumentReference)
+
+    def set_parent(self, token):
+        self._parent = token
+        self.storage['parent'] = token
+
+    def new_number(self, token, index):
+        self.reference.parent = self._parent
+        super(DocTempStorage, self).new_number(token, index)
+        self.reference.parent = self._parent
 
 
 def parse(string, singular_names, plural_names):
@@ -25,39 +67,22 @@ def parse(string, singular_names, plural_names):
 
     logger = logging.getLogger(__name__ + '.organize_string')
 
-    doc_storage = {'type_name': None, 'numbers': []}
-    doc_reference = Reference('', '')
-    doc_ref_storage = [doc_reference]
-    art_storage = {'numbers': [], 'parent': None}
-    art_reference = ArticleReference('')
-    art_ref_storage = [art_reference]
-    num_storage = {'numbers': [], 'parent': None}
-    num_reference = NumberReference('')
-    num_ref_storage = [num_reference]
-    lin_storage = {'numbers': [], 'parent': None}
-    lin_reference = LineReference('')
-    lin_ref_storage = [lin_reference]
+    temp_storage = {'doc': DocTempStorage(),
+                    'art': TempStorage(ArticleReference),
+                    'num': TempStorage(NumberReference),
+                    'lin': TempStorage(LineReference),
+                    }
 
     storage = {'documents': [], 'articles': [], 'numbers': [], 'lines': []}
-
-    def check_doc_format(token):
-        if document_state.isstate('single'):
-            if not doc_storage['numbers'] and token != doc_storage['type_name']:
-                assert(token == 'nº')
-        elif document_state.isstate('many'):
-            if not doc_storage['numbers'] and token != doc_storage['type_name']:
-                assert(token == 'n.os')
 
     def start_document(token):
         if token.as_str() in singular_names:
             document_state.single()
-            doc_storage['type_name'] = token
-            doc_reference.type = token
+            temp_storage['doc'].set_parent(token)
             logger.debug('changed to document.%s' % document_state.current)
         if token.as_str() in plural_names:
             document_state.many()
-            doc_storage['type_name'] = token
-            doc_reference.type = token
+            temp_storage['doc'].set_parent(token)
             logger.debug('changed to document.%s' % document_state.current)
 
     def start_article(token):
@@ -101,106 +126,75 @@ def parse(string, singular_names, plural_names):
 
         if re.match(DOCUMENT_NUMBER_REGEX, token.as_str()):
             assert not document_state.isstate('None')
-            if doc_reference.number:
-                doc_ref_storage.append(Reference(doc_reference.type, ''))
-                doc_reference = doc_ref_storage[-1]
-            doc_reference.index = index
-            doc_reference.number = token
-            doc_storage['numbers'].append(token)
+            temp_storage['doc'].new_number(token, index)
 
         if re.match(ARTICLE_NUMBER_REGEX, token.as_str()) and not article_state.isstate('None'):
-            if art_reference.number:
-                art_ref_storage.append(ArticleReference(''))
-                art_reference = art_ref_storage[-1]
-            art_reference.index = index
-            art_reference.number = token
-            art_storage['numbers'].append(token)
+            temp_storage['art'].new_number(token, index)
 
         if re.match(NUMBER_REGEX, token.as_str()) and not number_state.isstate('None'):
-            if num_reference.number:
-                num_ref_storage.append(NumberReference(''))
-                num_reference = num_ref_storage[-1]
-            num_reference.index = index
-            num_reference.number = token
-            num_storage['numbers'].append(token)
+            temp_storage['num'].new_number(token, index)
 
         if re.match(LINE_REGEX, token.as_str()) and not line_state.isstate('None'):
-            if lin_reference.number:
-                lin_ref_storage.append(LineReference(''))
-                lin_reference = lin_ref_storage[-1]
-            lin_reference.index = index
-            lin_reference.number = token
-            lin_storage['numbers'].append(token)
-
-        # checker
-        check_doc_format(token)
+            temp_storage['lin'].new_number(token, index)
 
         # storage and clear
         if line_state.isstate('single') and \
                 (token == '' or article_state.isstate('single') or
                  number_state.isstate('single')):
             if number_state.isstate('single'):
-                lin_storage['parent'] = num_storage
+                temp_storage['lin'].set_parent(temp_storage['num'])
             elif article_state.isstate('single'):
-                lin_storage['parent'] = art_storage
+                temp_storage['lin'].set_parent(temp_storage['art'])
 
-            storage['lines'].append(lin_storage)
+            storage['lines'].append(temp_storage['lin'].storage)
+
+            for ref in temp_storage['lin'].ref_storage:
+                result[ref.index] = ref
+                del ref.index
 
             line_state.clear()
-            lin_storage = {'numbers': [], 'parent': None}
-            lin_reference = LineReference('')
-            lin_ref_storage = [lin_reference]
+            temp_storage['lin'].clear()
             logger.debug('changed to line.%s' % line_state.current)
 
         if number_state.isstate('single') and \
                 (token == '' or article_state.isstate('single')):
             if article_state.isstate('single'):
-                num_storage['parent'] = art_storage
+                temp_storage['num'].set_parent(temp_storage['art'])
 
-            for ref in num_ref_storage:
-                if article_state.isstate('single'):
-                    ref.parent = art_reference
+            for ref in temp_storage['num'].ref_storage:
                 result[ref.index] = ref
                 del ref.index
 
-            storage['numbers'].append(num_storage)
+            storage['numbers'].append(temp_storage['num'].storage)
 
             number_state.clear()
-            num_storage = {'numbers': [], 'parent': None}
-            num_reference = NumberReference('')
-            num_ref_storage = [num_reference]
+            temp_storage['num'].clear()
             logger.debug('changed to number.%s' % number_state.current)
 
         if article_state.isstate('single') and \
                 (token == '' or document_state.isstate('single')):
             if document_state.isstate('single'):
-                art_storage['parent'] = doc_storage
+                temp_storage['art'].set_parent(temp_storage['doc'])
 
-            for ref in art_ref_storage:
-                if document_state.isstate('single'):
-                    ref.parent = doc_reference
+            for ref in temp_storage['art'].ref_storage:
                 result[ref.index] = ref
                 del ref.index
 
-            storage['articles'].append(art_storage)
+            storage['articles'].append(temp_storage['art'].storage)
 
             article_state.clear()
-            art_storage = {'numbers': [], 'document': None}
-            art_reference = ArticleReference('')
-            art_ref_storage = [art_reference]
+            temp_storage['art'].clear()
             logger.debug('changed to article.%s' % article_state.current)
 
         if document_state.isstate('single') and token == '':
-            for ref in doc_ref_storage:
+            for ref in temp_storage['doc'].ref_storage:
                 result[ref.index] = ref
                 del ref.index
 
-            storage['documents'].append(doc_storage)
+            storage['documents'].append(temp_storage['doc'].storage)
 
             document_state.clear()
-            doc_storage = {'type_name': None, 'numbers': []}
-            doc_reference = Reference('', '')
-            doc_ref_storage = [doc_reference]
+            temp_storage['doc'].clear()
             logger.debug('changed to document.%s' % document_state.current)
 
         # change from many -> last

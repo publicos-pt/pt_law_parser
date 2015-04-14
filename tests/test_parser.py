@@ -4,13 +4,13 @@ from pt_law_parser.expressions import Token
 from pt_law_parser.parser import parse
 
 
-class TestDocumentsParser(unittest.TestCase):
+class TestDocuments(unittest.TestCase):
 
-    def _test(self, string, type_name, numbers):
+    def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
         self.assertEqual(len(result['documents']), 1)
         self.assertEqual(result['documents'][0],
-                         {'type_name': type_name, 'numbers': numbers})
+                         {'parent': parent, 'numbers': numbers})
 
     def test_single(self):
         self._test('Decreto-Lei nº 2/2013.',
@@ -25,22 +25,22 @@ class TestDocumentsParser(unittest.TestCase):
     def test_many(self):
         self._test('Decretos-Leis n.os 1/2006, 2/2006, e 3/2006',
                    Token('Decretos-Leis'), [Token('1/2006'),
-                                               Token('2/2006'),
-                                               Token('3/2006')])
+                                            Token('2/2006'),
+                                            Token('3/2006')])
 
         self._test('Decretos-Leis n.os 1/2006, e 2/2006',
                    Token('Decretos-Leis'), [Token('1/2006'),
-                                               Token('2/2006')])
+                                            Token('2/2006')])
 
         self._test('Decretos-Leis n.os 64/2006, de 21 de março, '
                    '88/2006, de 23 de maio, e '
                    '196/2006, de 10 de outubro',
                    Token('Decretos-Leis'), [Token('64/2006'),
-                                               Token('88/2006'),
-                                               Token('196/2006')])
+                                            Token('88/2006'),
+                                            Token('196/2006')])
 
 
-class TestArticlesParser(unittest.TestCase):
+class TestArticles(unittest.TestCase):
 
     def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
@@ -65,12 +65,12 @@ class TestArticlesParser(unittest.TestCase):
 
     def test_with_document(self):
         self._test('Os artigos 3º, 4º-A, e 25º do Decreto-Lei 2/2013,',
-                   {'type_name': Token('Decreto-Lei'),
+                   {'parent': Token('Decreto-Lei'),
                     'numbers': [Token('2/2013')]},
                    [Token('3º'), Token('4º-A'), Token('25º')])
 
 
-class TestNumbersParser(unittest.TestCase):
+class TestNumbers(unittest.TestCase):
 
     def _test(self, string, parent, numbers):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
@@ -105,7 +105,7 @@ class TestNumbersParser(unittest.TestCase):
 
     def test_with_document(self):
         self._test('no nº 2 do artigo 26º do Decreto-Lei 2/2013,',
-                   {'parent': {'type_name': Token('Decreto-Lei'),
+                   {'parent': {'parent': Token('Decreto-Lei'),
                                'numbers': [Token('2/2013')]},
                     'numbers': [Token('26º')]},
                    [Token('2')])
@@ -163,7 +163,7 @@ class TestLines(unittest.TestCase):
     def test_with_document(self):
         self._test('referido nas alíneas f) e g) do nº 4 do artigo 26º '
                    'do Decreto-Lei nº 2/2013',
-                   {'parent': {'parent': {'type_name': Token('Decreto-Lei'),
+                   {'parent': {'parent': {'parent': Token('Decreto-Lei'),
                                           'numbers': [Token('2/2013')]},
                                'numbers': [Token('26º')]},
                     'numbers': [Token('4')]},
