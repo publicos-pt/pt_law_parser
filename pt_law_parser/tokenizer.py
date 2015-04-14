@@ -9,24 +9,18 @@ def _tokenize(string, stopchars='', keyterms=()):
     ending in a `EndOfString`.
 
     The string is tokenized using stopchars to separate tokens, but guarantees
-    that terms in `keyterms` are maintained. Example:
+    that terms in `keyterms` are maintained.
 
-    >>> tokenize('a b a ba a c', ' ', 'd a')
-    >>> ['a b', ' ', 'a b', 'a', ' ', 'a', ' ', 'c']
+    In case of multiple key terms matched, it matches the longest one:
+    "foo-bar" with keyterms (foo, foo-bar) matches "foo-bar".
     """
-    keyterms = list(keyterms)
 
-    def sorter(term):
-        total = 0
-        for x in stopchars:
-            total += term.count(x)
-        return total, len(term)
-    keyterms.sort(key=sorter, reverse=True)
-
-    # stores the set of terms that are using a given string.
+    # string_usages: set of terms that are using a given string.
+    # usages: the inverse of `string_usages`: which string is used by which term.
+    # matches: current terms already matched in sequence
     string_usages = defaultdict(set)
-    # stores the inverse of `string_usages`: string used by term.
     usages = {}
+    matches = set()
 
     # the lengthier sequence of tokens in use by a term.
     sequence = ''
@@ -39,28 +33,14 @@ def _tokenize(string, stopchars='', keyterms=()):
             if term in usages:
                 current_string = usages[term] + current_string
 
-            # the term matches exactly the list of tokens.
-            if term == current_string:
-                term_index = index + 1 - len(term)
-                # if the sequence is not the current string, we must
-                # yield the missing part first.
-                if sequence != current_string:
-                    rest = sequence[:-len(term)]
-                    yield Token(rest)
-
-                yield Token(term)
-                # clean all references and sequence
-                string_usages = defaultdict(set)
-                usages = {}
-                sequence = ''
-                sequence_start_index = index + 1
-                break
-            else:
+            if term not in matches:
                 if term.startswith(current_string):
                     # the term uses current_string; update the references list
                     # to current_string.
                     if term in usages:
                         string_usages[usages[term]].remove(term)
+                        if not string_usages[usages[term]]:
+                            del string_usages[usages[term]]
                     usages[term] = current_string
                     string_usages[current_string].add(term)
                 else:  # failed to match current_string.
@@ -71,6 +51,42 @@ def _tokenize(string, stopchars='', keyterms=()):
                             del string_usages[usages[term]]
                         del usages[term]
 
+            if term == current_string:
+                matches.add(term)
+
+        # create a set of candidates
+        candidates = set()
+        for match in matches:
+            assert match in string_usages
+            assert match in usages
+            if len(string_usages[match]) > 1:
+                continue
+            invalid = False
+            for string in string_usages:
+                if string != match and string.startswith(match):
+                    invalid = True
+                    break
+            if invalid:
+                continue
+            candidates.add(match)
+
+        if candidates:
+            # pick the longest candidate
+            term = sorted(list(candidates), key=lambda x: len(x), reverse=True)[0]
+            prefix, suffix = sequence.split(term)
+
+            if prefix:
+                yield Token(prefix)
+            yield Token(term)
+
+            sequence = suffix
+            for candidate in candidates:
+                matches.remove(candidate)
+                del string_usages[candidate]
+                del usages[candidate]
+            sequence_start_index += len(prefix) + len(term)
+
+        # yield non-keyterm tokens.
         token = ''
         backup = sequence
         backup_index = sequence_start_index

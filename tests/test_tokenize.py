@@ -85,6 +85,28 @@ class TestCase(unittest.TestCase):
             [Token('262'), Token('.º'), Token('-A'), EndOfLine()]
         )
 
+    def test_keyterm_subset_of_keyterm(self):
+        """
+        When keyterm is a subset of the other, return other.
+        """
+        self.assertEqual(
+            list(tokenize('Decreto-Lei', '', {'Decreto'})),
+            [Token('Decreto'), Token('-Lei'), EndOfLine()])
+
+        self.assertEqual(
+            list(tokenize('Decreto-Lei', '', {'Decreto', 'Decreto-Lei'})),
+            [Token('Decreto-Lei'), EndOfLine()])
+
+        self.assertEqual(
+            list(tokenize('Decreto-Barro', '', {'Decreto', 'Decreto-Lei'})),
+            [Token('Decreto'), Token('-Barro'), EndOfLine()])
+
+    def test_multiple_keyterms(self):
+        self.assertEqual(
+            list(tokenize('Decreto-Barros', '',
+                          {'Decreto', 'Decreto-Lei', '-Barro'})),
+            [Token('Decreto'), Token('-Barro'), Token('s'), EndOfLine()])
+
     def test_real(self):
         self.assertEqual(
             list(tokenize(
