@@ -16,29 +16,32 @@ LINE_REGEX = '^[\da-z]*\)$'
 
 class TempStorage(object):
     def __init__(self, ref_class):
-        self.ref_class = ref_class
-        self.storage = {'numbers': [], 'parent': None}
-        self.reference = self.ref_class('')
-        self.ref_storage = [self.reference]
+        self._ref_class = ref_class
+        self._reference = self._ref_class('')
+        self._storage = [self._reference]
+        self._indexes = {}
 
     def new_number(self, token, index):
-        if self.reference.number:
-            self.ref_storage.append(self.ref_class(''))
-            self.reference = self.ref_storage[-1]
-        self.reference.index = index
-        self.reference.number = token
-        self.storage['numbers'].append(token)
+        if self._reference.number:
+            self._storage.append(self._ref_class(''))
+            self._reference = self._storage[-1]
+        self._reference.number = token
+
+        assert index not in self._indexes
+        self._indexes[index] = self._reference
 
     def clear(self):
-        self.storage = {'numbers': [], 'parent': None}
-        self.reference = self.ref_class('')
-        self.ref_storage = [self.reference]
+        self._reference = self._ref_class('')
+        self._storage = [self._reference]
 
     def set_parent(self, temp_parent):
         assert isinstance(temp_parent, TempStorage)
-        self.storage['parent'] = temp_parent.storage
-        for ref in self.ref_storage:
-            ref.parent = temp_parent.reference
+        for ref in self._storage:
+            ref.parent = temp_parent._reference
+
+    def replace_in(self, result):
+        for index in self._indexes:
+            result[index] = self._indexes[index]
 
 
 class DocTempStorage(TempStorage):
@@ -48,12 +51,11 @@ class DocTempStorage(TempStorage):
 
     def set_parent(self, token):
         self._parent = token
-        self.storage['parent'] = token
 
     def new_number(self, token, index):
-        self.reference.parent = self._parent
+        self._reference.parent = self._parent
         super(DocTempStorage, self).new_number(token, index)
-        self.reference.parent = self._parent
+        self._reference.parent = self._parent
 
 
 def parse(string, singular_names, plural_names):
@@ -72,8 +74,6 @@ def parse(string, singular_names, plural_names):
                     'num': TempStorage(NumberReference),
                     'lin': TempStorage(LineReference),
                     }
-
-    storage = {'documents': [], 'articles': [], 'numbers': [], 'lines': []}
 
     def start_document(token):
         if token.as_str() in singular_names:
@@ -146,11 +146,7 @@ def parse(string, singular_names, plural_names):
             elif article_state.isstate('single'):
                 temp_storage['lin'].set_parent(temp_storage['art'])
 
-            storage['lines'].append(temp_storage['lin'].storage)
-
-            for ref in temp_storage['lin'].ref_storage:
-                result[ref.index] = ref
-                del ref.index
+            temp_storage['lin'].replace_in(result)
 
             line_state.clear()
             temp_storage['lin'].clear()
@@ -161,11 +157,7 @@ def parse(string, singular_names, plural_names):
             if article_state.isstate('single'):
                 temp_storage['num'].set_parent(temp_storage['art'])
 
-            for ref in temp_storage['num'].ref_storage:
-                result[ref.index] = ref
-                del ref.index
-
-            storage['numbers'].append(temp_storage['num'].storage)
+            temp_storage['num'].replace_in(result)
 
             number_state.clear()
             temp_storage['num'].clear()
@@ -176,22 +168,14 @@ def parse(string, singular_names, plural_names):
             if document_state.isstate('single'):
                 temp_storage['art'].set_parent(temp_storage['doc'])
 
-            for ref in temp_storage['art'].ref_storage:
-                result[ref.index] = ref
-                del ref.index
-
-            storage['articles'].append(temp_storage['art'].storage)
+            temp_storage['art'].replace_in(result)
 
             article_state.clear()
             temp_storage['art'].clear()
             logger.debug('changed to article.%s' % article_state.current)
 
         if document_state.isstate('single') and token == '':
-            for ref in temp_storage['doc'].ref_storage:
-                result[ref.index] = ref
-                del ref.index
-
-            storage['documents'].append(temp_storage['doc'].storage)
+            temp_storage['doc'].replace_in(result)
 
             document_state.clear()
             temp_storage['doc'].clear()
@@ -214,4 +198,4 @@ def parse(string, singular_names, plural_names):
             document_state.last()
             logger.debug('changed to document.%s' % document_state.current)
 
-    return storage
+    return result

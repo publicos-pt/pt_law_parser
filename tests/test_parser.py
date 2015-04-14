@@ -1,170 +1,163 @@
 import unittest
 
-from pt_law_parser.expressions import Token
+from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
+    NumberReference, LineReference
 from pt_law_parser.parser import parse
 
 
-class TestDocuments(unittest.TestCase):
-
-    def _test(self, string, parent, numbers):
+class GeneralTestCase(unittest.TestCase):
+    def _test(self, string, expected):
         result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
-        self.assertEqual(len(result['documents']), 1)
-        self.assertEqual(result['documents'][0],
-                         {'parent': parent, 'numbers': numbers})
+        self.assertEqual(string, result.as_str())
+
+        for exp, index, in expected:
+            self.assertEqual(result[index], exp)
+
+
+class TestDocuments(GeneralTestCase):
 
     def test_single(self):
         self._test('Decreto-Lei nº 2/2013.',
-                   Token('Decreto-Lei'), [Token('2/2013')])
+                   [(DocumentReference('2/2013', Token('Decreto-Lei')), 4)])
 
         self._test('Decreto-Lei nº 2/2013/A,',
-                   Token('Decreto-Lei'), [Token('2/2013/A')])
+                   [(DocumentReference('2/2013/A', Token('Decreto-Lei')), 4)])
 
         self._test('Decreto-Lei nº 2-A/2013,',
-                   Token('Decreto-Lei'), [Token('2-A/2013')])
+                   [(DocumentReference('2-A/2013', Token('Decreto-Lei')), 4)])
 
     def test_many(self):
         self._test('Decretos-Leis n.os 1/2006, 2/2006, e 3/2006',
-                   Token('Decretos-Leis'), [Token('1/2006'),
-                                            Token('2/2006'),
-                                            Token('3/2006')])
+                   [(DocumentReference('1/2006', Token('Decretos-Leis')), 4),
+                    (DocumentReference('2/2006', Token('Decretos-Leis')), 7),
+                    (DocumentReference('3/2006', Token('Decretos-Leis')), 12)])
 
         self._test('Decretos-Leis n.os 1/2006, e 2/2006',
-                   Token('Decretos-Leis'), [Token('1/2006'),
-                                            Token('2/2006')])
+                   [(DocumentReference('1/2006', Token('Decretos-Leis')), 4),
+                    (DocumentReference('2/2006', Token('Decretos-Leis')), 9)])
 
         self._test('Decretos-Leis n.os 64/2006, de 21 de março, '
                    '88/2006, de 23 de maio, e '
                    '196/2006, de 10 de outubro',
-                   Token('Decretos-Leis'), [Token('64/2006'),
-                                            Token('88/2006'),
-                                            Token('196/2006')])
+                   [(DocumentReference('64/2006', Token('Decretos-Leis')), 4),
+                    (DocumentReference('88/2006', Token('Decretos-Leis')), 16),
+                    (DocumentReference('196/2006', Token('Decretos-Leis')), 30)])
 
 
-class TestArticles(unittest.TestCase):
-
-    def _test(self, string, parent, numbers):
-        result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
-        self.assertEqual(len(result['articles']), 1)
-        self.assertEqual(result['articles'][0],
-                         {'parent': parent, 'numbers': numbers})
+class TestArticles(GeneralTestCase):
 
     def test_single(self):
-        self._test('dos SSMJ previstos no artigo 3º.',
-                   None, [Token('3º')])
+        self._test('no artigo 3º.', [(ArticleReference('3º'), 4)])
 
-        self._test('dos SSMJ previstos no artigo 3º-A,',
-                   None, [Token('3º-A')])
+        self._test('no artigo 3º-A,', [(ArticleReference('3º-A'), 4)])
 
-        self._test('dos SSMJ previstos no artigo anterior',
-                   None, [Token('anterior')])
+        self._test('no artigo anterior', [(ArticleReference('anterior'), 4)])
 
     def test_many(self):
         self._test('Os artigos 3º, 4º-A, 7º e 25º entram em vigor',
-                   None, [Token('3º'), Token('4º-A'),
-                          Token('7º'), Token('25º')])
+                   [(ArticleReference('3º'), 4),
+                    (ArticleReference('4º-A'), 7),
+                    (ArticleReference('7º'), 10),
+                    (ArticleReference('25º'), 14)])
 
     def test_with_document(self):
-        self._test('Os artigos 3º, 4º-A, e 25º do Decreto-Lei 2/2013,',
-                   {'parent': Token('Decreto-Lei'),
-                    'numbers': [Token('2/2013')]},
-                   [Token('3º'), Token('4º-A'), Token('25º')])
+        doc = DocumentReference('2/2013', Token('Decreto-Lei'))
+        self._test('Os artigos 3º, 4º-A, 7º e 25º do Decreto-Lei 2/2013,',
+                   [(ArticleReference('3º', doc), 4),
+                    (ArticleReference('4º-A', doc), 7),
+                    (ArticleReference('7º', doc), 10),
+                    (ArticleReference('25º', doc), 14),
+                    (doc, 20)])
 
 
-class TestNumbers(unittest.TestCase):
-
-    def _test(self, string, parent, numbers):
-        result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
-        self.assertEqual(len(result['numbers']), 1)
-        self.assertEqual({'parent': parent, 'numbers': numbers},
-                         result['numbers'][0])
+class TestNumbers(GeneralTestCase):
 
     def test_single(self):
-        self._test('no nº 2.', None, [Token('2')])
-        self._test('no nº 2,', None, [Token('2')])
-        self._test('no nº 2 ', None, [Token('2')])
+        self._test('no nº 2.', [(NumberReference('2'), 4)])
+        self._test('no nº 2,', [(NumberReference('2'), 4)])
+        self._test('no nº 2 ', [(NumberReference('2'), 4)])
 
     def test_many(self):
-        self._test('Os n.os 1 e 3 deixam', None, [Token('1'), Token('3')])
+        self._test('Os n.os 1 e 3 deixam', [(NumberReference('1'), 4),
+                                            (NumberReference('3'), 8)])
 
     def test_with_article(self):
-        self._test('no nº 2 do artigo seguinte',
-                   {'parent': None, 'numbers': [Token('seguinte')]},
-                   [Token('2')])
+        art = ArticleReference('seguinte')
+        self._test('no nº 2 do artigo seguinte', [(NumberReference('2', art), 4)])
 
         self._test('nos n.os 2 e 3 do artigo seguinte',
-                   {'parent': None, 'numbers': [Token('seguinte')]},
-                   [Token('2'), Token('3')])
+                   [(NumberReference('2', art), 4),
+                    (NumberReference('3', art), 8)])
 
         self._test('nos n.os 1, 2 e 3 do artigo seguinte',
-                   {'parent': None, 'numbers': [Token('seguinte')]},
-                   [Token('1'), Token('2'), Token('3')])
+                   [(NumberReference('1', art), 4),
+                    (NumberReference('2', art), 7),
+                    (NumberReference('3', art), 11)])
 
-        self._test('no nº 2 do artigo 26º',
-                   {'parent': None, 'numbers': [Token('26º')]},
-                   [Token('2')])
+        art = ArticleReference('26º')
+        self._test('no nº 2 do artigo 26º', [(NumberReference('2', art), 4)])
 
     def test_with_document(self):
+        doc = DocumentReference('2/2013', Token('Decreto-Lei'))
+        art = ArticleReference('26º', doc)
         self._test('no nº 2 do artigo 26º do Decreto-Lei 2/2013,',
-                   {'parent': {'parent': Token('Decreto-Lei'),
-                               'numbers': [Token('2/2013')]},
-                    'numbers': [Token('26º')]},
-                   [Token('2')])
+                   [(NumberReference('2', art), 4)])
 
 
-class TestLines(unittest.TestCase):
-    def _test(self, string, parent, numbers):
-        result = parse(string, {'Decreto-Lei'}, {'Decretos-Leis'})
-        self.assertEqual(len(result['lines']), 1)
-        self.assertEqual({'parent': parent, 'numbers': numbers},
-                         result['lines'][0])
+class TestLines(GeneralTestCase):
 
     def test_single(self):
-        self._test('na alínea f).', None, [Token('f)')])
-        self._test('na alínea f),', None, [Token('f)')])
-        self._test('na alínea f) ', None, [Token('f)')])
+        line = LineReference('f)')
+        self._test('na alínea f).', [(line, 4)])
+        self._test('na alínea f),', [(line, 4)])
+        self._test('na alínea f) ', [(line, 4)])
 
     def test_many(self):
-        expectation = [Token('f)'), Token('g)')]
+        expectation = [(LineReference('f)'), 4), (LineReference('g)'), 8)]
 
-        self._test('referido na alíneas f) e g).', None, expectation)
-        self._test('referido na alíneas f) e g) ', None, expectation)
-        self._test('referido na alíneas f) e g), como', None, expectation)
+        self._test('nas alíneas f) e g).', expectation)
+        self._test('nas alíneas f) e g) ', expectation)
+        self._test('nas alíneas f) e g), como', expectation)
 
-        expectation = [Token('1)'), Token('5)')]
+        expectation = [(LineReference('1)'), 4), (LineReference('5)'), 8)]
 
-        self._test('referido na alíneas 1) e 5).', None, expectation)
-        self._test('referido na alíneas 1) e 5) ', None, expectation)
-        self._test('referido na alíneas 1) e 5), como', None, expectation)
+        self._test('nas alíneas 1) e 5).', expectation)
+        self._test('nas alíneas 1) e 5) ', expectation)
+        self._test('nas alíneas 1) e 5), como', expectation)
 
-        expectation = [Token('aa)'), Token('bb)')]
+        expectation = [(LineReference('aa)'), 4), (LineReference('bb)'), 8)]
 
-        self._test('referido na alíneas aa) e bb).', None, expectation)
-        self._test('referido na alíneas aa) e bb) ', None, expectation)
-        self._test('referido na alíneas aa) e bb), como', None, expectation)
+        self._test('nas alíneas aa) e bb).', expectation)
+        self._test('nas alíneas aa) e bb) ', expectation)
+        self._test('nas alíneas aa) e bb), como', expectation)
 
     def test_with_number(self):
+        parent = NumberReference('4')
+        self._test('na alínea f) do nº 4.',
+                   [(LineReference('f)', parent), 4), (parent, 10)])
 
-        self._test('referido na alínea f) do nº 4.',
-                   {'parent': None, 'numbers': [Token('4')]},
-                   [Token('f)')])
+        parent = NumberReference('anterior')
+        self._test('nas alíneas f) e g) do nº anterior.',
+                   [(LineReference('f)', parent), 4),
+                    (LineReference('g)', parent), 8), (parent, 14)])
 
-        self._test('referido nas alíneas f) e g) do nº anterior.',
-                   {'parent': None, 'numbers': [Token('anterior')]},
-                   [Token('f)'), Token('g)')])
+        parent = ArticleReference('anterior')
+        self._test('nas alíneas f) e g) do artigo anterior.',
+                   [(LineReference('f)', parent), 4),
+                    (LineReference('g)', parent), 8), (parent, 14)])
 
-        self._test('referido nas alíneas f) e g) do artigo anterior.',
-                   {'parent': None, 'numbers': [Token('anterior')]},
-                   [Token('f)'), Token('g)')])
-
-        self._test('referido nas alíneas f) e g) do artigo 26º',
-                   {'parent': None, 'numbers': [Token('26º')]},
-                   [Token('f)'), Token('g)')])
+        parent = ArticleReference('26º')
+        self._test('nas alíneas f) e g) do artigo 26º',
+                   [(LineReference('f)', parent), 4),
+                    (LineReference('g)', parent), 8), (parent, 14)])
 
     def test_with_document(self):
-        self._test('referido nas alíneas f) e g) do nº 4 do artigo 26º '
+        document = DocumentReference('2/2013', Token('Decreto-Lei'))
+        article = ArticleReference('26º', document)
+        number = NumberReference('4', article)
+
+        self._test('nas alíneas f) e g) do nº 4 do artigo 26º '
                    'do Decreto-Lei nº 2/2013',
-                   {'parent': {'parent': {'parent': Token('Decreto-Lei'),
-                                          'numbers': [Token('2/2013')]},
-                               'numbers': [Token('26º')]},
-                    'numbers': [Token('4')]},
-                   [Token('f)'), Token('g)')])
+                   [(LineReference('f)', number), 4),
+                    (LineReference('g)', number), 8), (number, 14),
+                    (article, 20), (document, 28)])
