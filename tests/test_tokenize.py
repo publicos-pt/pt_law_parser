@@ -1,6 +1,6 @@
 import unittest
 
-from pt_law_parser.expressions import Token, Separator, EndOfLine, Expression
+from pt_law_parser.expressions import Token, Separator, EndOfLine
 from pt_law_parser.tokenizer import tokenize
 
 
