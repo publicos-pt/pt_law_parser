@@ -107,6 +107,25 @@ class TestCase(unittest.TestCase):
                           {'Decreto', 'Decreto-Lei', '-Barro'})),
             [Token('Decreto'), Token('-Barro'), Token('s'), EndOfLine()])
 
+    def test_keyterm_in_begin(self):
+        self.assertEqual(
+            list(tokenize('pre-foo-suf', '', ('pre', 'pre-foo-suf'))),
+            [Token('pre-foo-suf'), EndOfLine()])
+
+    def test_keyterm_in_middle(self):
+        self.assertEqual(
+            list(tokenize('pre-foo-suf', '', ('foo', 'pre-foo-suf'))),
+            [Token('pre-foo-suf'), EndOfLine()])
+
+    def test_keyterm_in_end(self):
+        self.assertEqual(
+            list(tokenize('pre-foo-suf', '', ('pre-foo-suf', 'suf'))),
+            [Token('pre-foo-suf'), EndOfLine()])
+
+        self.assertEqual(
+            list(tokenize('n.º 2', ' ', ('n.º', '.º'))),
+            [Token('n.º'), Separator(' '), Token('2'), EndOfLine()])
+
     def test_real(self):
         self.assertEqual(
             list(tokenize(

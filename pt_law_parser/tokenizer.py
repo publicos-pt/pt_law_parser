@@ -63,7 +63,7 @@ def _tokenize(string, stopchars='', keyterms=()):
                 continue
             invalid = False
             for string in string_usages:
-                if string != match and string.startswith(match):
+                if string != match and match in string:
                     invalid = True
                     break
             if invalid:
@@ -79,11 +79,14 @@ def _tokenize(string, stopchars='', keyterms=()):
                 yield Token(prefix)
             yield Token(term)
 
+            # remove all usages that were part of the yielded in term
+            for string in dict(string_usages):
+                if string in term:
+                    del string_usages[string]
+                    del usages[string]
+                    matches.remove(string)
+
             sequence = suffix
-            for candidate in candidates:
-                matches.remove(candidate)
-                del string_usages[candidate]
-                del usages[candidate]
             sequence_start_index += len(prefix) + len(term)
 
         # yield non-keyterm tokens.
