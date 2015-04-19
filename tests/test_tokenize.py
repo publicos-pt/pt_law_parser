@@ -126,6 +126,10 @@ class TestCase(unittest.TestCase):
             list(tokenize('n.º 2', ' ', ('n.º', '.º'))),
             [Token('n.º'), Separator(' '), Token('2'), EndOfLine()])
 
+        self.assertEqual(
+            list(tokenize('foo-bar', '', ('foo-bar', 'bar tal'))),
+            [Token('foo-bar'), EndOfLine()])
+
     def test_real(self):
         self.assertEqual(
             list(tokenize(

@@ -82,9 +82,11 @@ def _tokenize(string, stopchars='', keyterms=()):
             # remove all usages that were part of the yielded in term
             for string in dict(string_usages):
                 if string in term:
+                    for usage in string_usages[string]:
+                        del usages[usage]
                     del string_usages[string]
-                    del usages[string]
-                    matches.remove(string)
+                    if string in matches:
+                        matches.remove(string)
 
             sequence = suffix
             sequence_start_index += len(prefix) + len(term)
