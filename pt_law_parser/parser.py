@@ -149,7 +149,7 @@ class ObserverManager(object):
         return set(self._rules.keys())
 
     def _items(self):
-        return sorted(dict(self._observers).items(), key=lambda x: x[0], reverse=True)
+        return sorted(dict(self._observers).items(), reverse=True)
 
     def observe(self, index, token, caught):
         for i, observer in self._items():
