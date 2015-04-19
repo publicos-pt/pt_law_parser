@@ -59,6 +59,12 @@ class TestDocuments(GeneralTestCase):
 
         self._test(string, managers, expected)
 
+        string = 'foo 1/1 bar 2/1'
+        expected = [(DocumentReference('1/1', Token('foo')), 2),
+                    (DocumentReference('2/1', Token('bar')), 6)]
+
+        self._test(string, managers, expected)
+
 
 class TestArticles(GeneralTestCase):
 

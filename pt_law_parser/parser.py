@@ -148,13 +148,16 @@ class ObserverManager(object):
     def terms(self):
         return set(self._rules.keys())
 
+    def _items(self):
+        return sorted(dict(self._observers).items(), key=lambda x: x[0], reverse=True)
+
     def observe(self, index, token, caught):
-        for i, observer in self._observers.items():
+        for i, observer in self._items():
             caught = observer.observe(index, token, caught) or caught
         return caught
 
     def replace_in(self, result):
-        for i, observer in dict(self._observers).items():
+        for i, observer in self._items():
             if observer.is_done:
                 observer.replace_in(result)
                 del self._observers[i]
