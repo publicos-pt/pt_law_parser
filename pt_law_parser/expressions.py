@@ -55,24 +55,6 @@ class Token(AbstractCompilable):
                                                self.as_str())
 
 
-class Separator(Token):
-    def __init__(self, separator):
-        assert len(separator) == 1
-        super(Separator, self).__init__(separator)
-
-
-class EndOfLine(Token):
-
-    def __init__(self):
-        super(EndOfLine, self).__init__('')
-
-    def as_html(self):
-        return ''
-
-    def as_str(self):
-        return ''
-
-
 class Reference(Token):
     def __init__(self, number, parent=None):
         super(Reference, self).__init__(number)

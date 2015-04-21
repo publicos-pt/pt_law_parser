@@ -7,8 +7,8 @@ from pt_law_parser.parser import parse, DocumentsObserver, \
 
 
 class GeneralTestCase(unittest.TestCase):
-    def _test(self, string, managerss, expected):
-        result = parse(string, managerss, {'n.os'})
+    def _test(self, string, managers, expected):
+        result = parse(string, managers, {' ', '.', ',', '\n', 'n.os'})
         self.assertEqual(string, result.as_str())
 
         for exp, index, in expected:

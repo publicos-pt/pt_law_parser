@@ -1,7 +1,7 @@
 import re
 
 from .tokenizer import tokenize
-from .expressions import Separator, Token, EndOfLine, Expression, \
+from .expressions import Token, Expression, \
     DocumentReference, ArticleReference, NumberReference, LineReference
 
 
@@ -34,6 +34,9 @@ class Observer(object):
     def replace_in(self, result):
         raise NotImplementedError
 
+    def finish(self):
+        self._is_done = True
+
 
 class DocumentsObserver(Observer):
 
@@ -47,7 +50,7 @@ class DocumentsObserver(Observer):
             self._numbers[index] = token
             return True
 
-        if token in (Separator('.'), EndOfLine()):
+        if token in (Token('.'), Token('\n')):
             self._is_done = True
 
         return False
@@ -68,7 +71,7 @@ class ArticlesObserver(Observer):
         self._parent = None
 
     def observe(self, index, token, caught):
-        if token in (Separator('.'), EndOfLine()):
+        if token in (Token('.'), Token('\n')):
             self._is_done = True
 
         if self._parent:
@@ -94,7 +97,7 @@ class NumbersObserver(ArticlesObserver):
     klass = NumberReference
 
     def observe(self, index, token, caught):
-        if token in (Separator('.'), EndOfLine()):
+        if token in (Token('.'), Token('\n')):
             self._is_done = True
 
         if self._parent:
@@ -115,7 +118,7 @@ class LineObserver(ArticlesObserver):
     klass = LineReference
 
     def observe(self, index, token, caught):
-        if token in (Separator('.'), EndOfLine()):
+        if token in (Token('.'), Token('\n')):
             self._is_done = True
 
         if self._parent:
@@ -162,6 +165,12 @@ class ObserverManager(object):
                 observer.replace_in(result)
                 del self._observers[i]
 
+    def finish(self, result):
+        for i, observer in self._items():
+            observer.finish()
+            observer.replace_in(result)
+            del self._observers[i]
+
 
 def parse(string, managers, terms=set()):
     result = Expression()
@@ -169,7 +178,7 @@ def parse(string, managers, terms=set()):
     for manager in managers:
         terms |= manager.terms
 
-    for index, token in enumerate(tokenize(string, ' ,.', terms)):
+    for index, token in enumerate(tokenize(string, terms)):
         result.append(token)
 
         caught = False
@@ -177,5 +186,8 @@ def parse(string, managers, terms=set()):
             manager.generate(index, token)
             caught = manager.observe(index, token, caught) or caught
             manager.replace_in(result)
+
+    for manager in managers:
+        manager.finish(result)
 
     return result

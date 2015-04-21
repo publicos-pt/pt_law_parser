@@ -1,15 +1,14 @@
 from collections import defaultdict
 
-from .expressions import Token, Separator, EndOfLine, Expression
+from .expressions import Token
 
 
-def _tokenize(string, stopchars='', keyterms=()):
+def tokenize(string, keyterms=()):
     """
-    Tokenizes a string into a list of `Token`s separated by `Separator`s and
-    ending in a `EndOfString`.
+    Tokenizes a string into a list of `Token`s.
 
-    The string is tokenized using stopchars to separate tokens, but guarantees
-    that terms in `keyterms` are maintained.
+    The string is tokenized guaranteeing that keyterms are single tokens and
+    everything else is a single token.
 
     In case of multiple key terms matched, it matches the longest one:
     "foo-bar" with keyterms (foo, foo-bar) matches "foo-bar".
@@ -73,10 +72,11 @@ def _tokenize(string, stopchars='', keyterms=()):
         if candidates:
             # pick the longest candidate
             term = sorted(list(candidates), key=lambda x: len(x), reverse=True)[0]
-            prefix, suffix = sequence.split(term)
+            prefix, suffix = str(sequence).rsplit(term, 1)
 
             if prefix:
-                yield Token(prefix)
+                for token in tokenize(prefix, keyterms):
+                    yield token
             yield Token(term)
 
             # remove all usages that were part of the yielded in term
@@ -91,35 +91,10 @@ def _tokenize(string, stopchars='', keyterms=()):
             sequence = suffix
             sequence_start_index += len(prefix) + len(term)
 
-        # yield non-keyterm tokens.
-        token = ''
-        backup = sequence
-        backup_index = sequence_start_index
-        while sequence and sequence not in string_usages:
-            if sequence[0] in stopchars:
-                # yield the term
-                if token:
-                    yield Token(token)
-                    sequence_start_index += len(token)
-                # yield the stop word
-                yield Separator(sequence[0])
-                sequence_start_index += 1
-
-                # move the backup
-                chars_move = len(token) + 1
-                backup = backup[chars_move:]
-                backup_index += chars_move
-                token = ''
-            else:
-                token += sequence[0]
-            sequence = sequence[1:]
-        sequence = backup
-        sequence_start_index = backup_index
-
+    for match in matches:
+        prefix, suffix = sequence.split(match)
+        yield prefix
+        yield match
+        sequence = suffix
     if sequence:
         yield Token(sequence)
-    yield EndOfLine()
-
-
-def tokenize(string, stopchars='', keyterms=()):
-    return Expression(x for x in _tokenize(string, stopchars, keyterms))
