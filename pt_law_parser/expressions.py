@@ -32,7 +32,14 @@ class Expression(list, AbstractCompilable):
     A general expression.
     """
     def as_html(self):
-        return ''.join(v.as_html() for v in self)
+        string = '<p>'
+        for t in self:
+            if t.as_str() == '\n':
+                string += '</p><p>'
+            else:
+                string += t.as_html()
+        string += '</p>'
+        return string
 
     def as_str(self):
         return ''.join(v.as_str() for v in self)
@@ -51,8 +58,7 @@ class Token(AbstractCompilable):
         return self.as_str()
 
     def as_html(self):
-        return '<span class="%s">%s</span>' % (self.__class__.__name__,
-                                               self.as_str())
+        return self.as_str()
 
 
 class Reference(Token):
