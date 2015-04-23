@@ -23,7 +23,6 @@ def tokenize(string, keyterms=()):
 
     # the lengthier sequence of tokens in use by a term.
     sequence = ''
-    sequence_start_index = 0
     for index, char in enumerate(string):
         sequence += char
 
@@ -85,11 +84,10 @@ def tokenize(string, keyterms=()):
                     for usage in string_usages[string]:
                         del usages[usage]
                     del string_usages[string]
-                    if string in matches:
-                        matches.remove(string)
+                if string in matches:
+                    matches.remove(string)
 
             sequence = suffix
-            sequence_start_index += len(prefix) + len(term)
 
     for match in matches:
         prefix, suffix = sequence.split(match)
