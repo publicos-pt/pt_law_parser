@@ -6,9 +6,6 @@ class AbstractCompilable(object):
     def as_str(self):
         raise NotImplementedError
 
-    def as_html(self):
-        raise NotImplementedError
-
     def __eq__(self, other):
         if isinstance(other, str):
             return self.as_str() == other
@@ -31,16 +28,6 @@ class Expression(list, AbstractCompilable):
     """
     A general expression.
     """
-    def as_html(self):
-        string = '<p>'
-        for t in self:
-            if t.as_str() == '\n':
-                string += '</p><p>'
-            else:
-                string += t.as_html()
-        string += '</p>'
-        return string
-
     def as_str(self):
         return ''.join(v.as_str() for v in self)
 
@@ -51,13 +38,14 @@ class Token(AbstractCompilable):
         assert isinstance(string, str)
         self._string = string
 
-    def as_str(self):
+    @property
+    def string(self):
         return self._string
 
-    def __str__(self):
-        return self.as_str()
+    def as_str(self):
+        return self.string
 
-    def as_html(self):
+    def __str__(self):
         return self.as_str()
 
 
