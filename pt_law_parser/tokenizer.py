@@ -91,8 +91,8 @@ def tokenize(string, keyterms=()):
 
     for match in matches:
         prefix, suffix = sequence.split(match)
-        yield prefix
-        yield match
+        yield Token(prefix)
+        yield Token(match)
         sequence = suffix
     if sequence:
         yield Token(sequence)
