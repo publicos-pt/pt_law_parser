@@ -134,9 +134,7 @@ class Anchor(Element):
 
 
 class Article(Anchor):
-
     def __init__(self, anchor):
-        assert(isinstance(anchor, expressions.Article))
         super(Article, self).__init__(anchor, 'a')
         self.append(Text(anchor.name + ' '))
         number = Element('a')
@@ -167,3 +165,11 @@ class Line(Anchor):
         self.append(number)
         self.append(Text(' '))
         self.anchor_element_index = 0
+
+
+class Annex(Article):
+    pass
+
+
+class Section(Article):
+    pass

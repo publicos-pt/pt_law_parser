@@ -1,4 +1,4 @@
-from pt_law_parser.html import Number, Line, Article
+from pt_law_parser.html import Number, Line, Article, Section, Annex
 
 hierarchy_priority = ['Anexo',
                       'Parte',
@@ -58,7 +58,13 @@ hierarchy_regex = {'Anexo': '^Anexo(.*)',
 formal_hierarchy_elements = ['Anexo', 'Artigo', 'Número', 'Alínea']
 
 
-hierarchy_classes = {'Número': Number,
-                     'Alínea': Line,
+hierarchy_classes = {'Anexo': Annex,
+                     'Parte': Section,
+                     'Título': Section,
+                     'Capítulo': Section,
+                     'Secção': Section,
+                     'Sub-Secção': Section,
                      'Artigo': Article,
+                     'Número': Number,
+                     'Alínea': Line,
                      }

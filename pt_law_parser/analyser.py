@@ -1,25 +1,31 @@
 from copy import deepcopy
 
-from .html import Document, Element, Text, Reference, Anchor, Article, Number, Line
+from .html import Document, Element, Text, Reference, Anchor, Article, Number, \
+    Line, Section, Annex
 
-from pt_law_parser.core import parser, expressions
+from pt_law_parser.core import parser, expressions, observers
 from pt_law_parser import constants
 
 
 anchor_mapping = {
     expressions.Line: Line,
     expressions.Number: Number,
-    expressions.Article: Article}
+    expressions.Article: Article,
+    expressions.Annex: Annex,
+    expressions.Part: Section,
+    expressions.Title: Section,
+    expressions.Section: Section,
+    expressions.SubSection: Section,
+    expressions.Chapter: Section,
+}
 
 
 def parse(text):
     type_names = ['Decreto-Lei', 'Lei', 'Declaração de Rectificação', 'Portaria']
 
-    managers = [
-        parser.ObserverManager(dict((name, parser.DocumentsObserver) for name in type_names)),
-        parser.ArticleObserverManager(), parser.NumberObserverManager(),
-        parser.LineObserverManager(),
-        parser.ObserverManager(dict((name, parser.ArticlesObserver) for name in ['artigo', 'artigos']))]
+    managers = parser.common_managers + [
+        parser.ObserverManager(dict((name, observers.DocumentsObserver) for name in type_names)),
+        parser.ObserverManager(dict((name, observers.ArticlesObserver) for name in ['artigo', 'artigos']))]
 
     terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
     for manager in managers:
@@ -169,14 +175,14 @@ class HierarchyParser():
             else:
                 self.root.append(paragraph)
             return  # blockquote added, ignore rest of it.
+
         for format in hierarchy_priority:
-            if format not in constants.hierarchy_classes or \
-                    not isinstance(paragraph, constants.hierarchy_classes[format]):
+            if not isinstance(paragraph, constants.hierarchy_classes[format]):
                 continue
 
             new_element = create_element(paragraph, format)
 
-            if self._add_links and isinstance(paragraph, Anchor):
+            if self._add_links and format in constants.formal_hierarchy_elements:
                 add_id(new_element, paragraph, format)
 
             add_element_to_hierarchy(new_element, format)

@@ -2,14 +2,15 @@ import unittest
 
 from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, Article, Number, Line
-from pt_law_parser.core.parser import parse, DocumentsObserver, \
-    ObserverManager, ArticlesObserver, NumbersObserver, LineObserver, \
-    ArticleObserverManager, NumberObserverManager, LineObserverManager
+from pt_law_parser.core import parser
+from pt_law_parser.core.parser import ObserverManager
+from pt_law_parser.core.observers import DocumentsObserver, NumbersObserver, \
+    LineObserver, ArticlesObserver
 
 
 class GeneralTestCase(unittest.TestCase):
     def _test(self, string, managers, expected):
-        result = parse(string, managers, {' ', '.', ',', '\n', 'n.os'})
+        result = parser.parse(string, managers, {' ', '.', ',', '\n', 'n.os'})
         self.assertEqual(string, result.as_str())
 
         for exp, index, in expected:
@@ -231,7 +232,7 @@ class TestLines(GeneralTestCase):
 class TestAnchorArticle(GeneralTestCase):
 
     def test_simple(self):
-        managers = [ArticleObserverManager()]
+        managers = parser.common_managers
 
         line = Article('1º')
         self._test('\nArtigo 1º\n', managers, [(line, 1)])
@@ -240,7 +241,7 @@ class TestAnchorArticle(GeneralTestCase):
 class TestAnchorNumber(GeneralTestCase):
 
     def test_simple(self):
-        managers = [NumberObserverManager()]
+        managers = parser.common_managers
 
         line = Number('1')
         self._test('\n1 - test\n', managers, [(line, 1)])
@@ -249,7 +250,7 @@ class TestAnchorNumber(GeneralTestCase):
 class TestAnchorLine(GeneralTestCase):
 
     def test_simple(self):
-        managers = [LineObserverManager()]
+        managers = parser.common_managers
 
         line = Line('a)')
         self._test('\na) test\n', managers, [(line, 1)])

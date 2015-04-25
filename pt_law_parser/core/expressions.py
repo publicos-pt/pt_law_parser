@@ -121,6 +121,30 @@ class Anchor(Token):
         return self._number
 
 
+class Section(Anchor):
+    name = 'Secção'
+
+
+class SubSection(Anchor):
+    name = 'Sub-Secção'
+
+
+class Part(Anchor):
+    name = 'Parte'
+
+
+class Chapter(Anchor):
+    name = 'Capítulo'
+
+
+class Title(Anchor):
+    name = 'Título'
+
+
+class Annex(Anchor):
+    name = 'Anexo'
+
+
 class Article(Anchor):
     name = 'Artigo'
 
