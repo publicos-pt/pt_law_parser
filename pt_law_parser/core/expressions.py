@@ -15,18 +15,10 @@ class Token(object):
         return self.as_str()
 
     def __eq__(self, other):
-        if isinstance(other, str):
-            return self.as_str() == other
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         else:
-            return False
-
-    def __ne__(self, other):
-        return not self.__eq__(other)
-
-    def __hash__(self):
-        return hash(tuple(sorted(self.__dict__.items())))
+            raise NotImplementedError
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
@@ -47,19 +39,6 @@ class Reference(Token):
     def parent(self):
         return self._parent
 
-    @parent.setter
-    def parent(self, parent):
-        self._parent = parent
-
-    @property
-    def number(self):
-        return self._string
-
-    @number.setter
-    def number(self, token):
-        assert isinstance(token, Token)
-        self._string = token.as_str()
-
 
 class DocumentReference(Reference):
 
@@ -67,33 +46,21 @@ class DocumentReference(Reference):
         return '<%s %s>' % (self.__class__.__name__,
                             repr(str(self)))
 
-    def __str__(self):
-        return self.parent.as_str() + ' ' + self.number
-
 
 class LineReference(Reference):
-
-    def __str__(self):
-        return 'Alínea %s' % self.number
+    pass
 
 
 class NumberReference(Reference):
-
-    def __str__(self):
-        return 'nº %s' % self.number
+    pass
 
 
 class ArticleReference(Reference):
-
-    def __str__(self):
-        return 'Artigo %s' % self.number
+    pass
 
 
 class EULawReference(Reference):
-
-    def __init__(self, number):
-        super(EULawReference, self).__init__(number)
-        assert isinstance(number, str)
+    pass
 
 
 class Anchor(Token):
