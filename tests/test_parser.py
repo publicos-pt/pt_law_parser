@@ -1,8 +1,8 @@
 import unittest
 
-from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
+from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, ArticleAnchor
-from pt_law_parser.parser import parse, DocumentsObserver, \
+from pt_law_parser.core.parser import parse, DocumentsObserver, \
     ObserverManager, ArticlesObserver, NumbersObserver, LineObserver, \
     AnchorObserverManager
 

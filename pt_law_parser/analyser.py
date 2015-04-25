@@ -2,8 +2,7 @@ import re
 from copy import deepcopy
 from collections import OrderedDict
 
-from pt_law_parser import parser
-from pt_law_parser import expressions
+from pt_law_parser.core import parser, expressions
 from pt_law_parser import constants
 
 
@@ -116,7 +115,8 @@ class Anchor(Element):
 def parse(text):
     type_names = ['Decreto-Lei', 'Lei', 'Declaração de Rectificação', 'Portaria']
 
-    managers = [parser.ObserverManager(dict((name, parser.DocumentsObserver) for name in type_names)),
+    managers = [
+        parser.ObserverManager(dict((name, parser.DocumentsObserver) for name in type_names)),
                 parser.AnchorObserverManager(),
                 parser.ObserverManager(dict((name, parser.ArticlesObserver) for name in ['artigo', 'artigos']))]
 
