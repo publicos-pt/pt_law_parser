@@ -73,9 +73,11 @@ class Element(BaseElement):
     def as_html(self):
         attributes = ''.join('%s="%s" ' % (key, value)
                              for (key, value) in self._attrib.items())
+        if attributes:
+            attributes = ' ' + attributes
 
-        return '<{0} {1}>{2}</{0}>'.format(self.tag, attributes,
-                                           super(Element, self).as_html())
+        return '<{0}{1}>{2}</{0}>'.format(self.tag, attributes,
+                                          super(Element, self).as_html())
 
     def set_id(self, id):
         self.attrib['id'] = id
