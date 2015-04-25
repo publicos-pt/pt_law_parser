@@ -12,10 +12,6 @@ class BaseElement(object):
         self._children.append(element)
         element.set_parent(self)
 
-    def remove(self, element):
-        element.clean_parent()
-        self._children.remove(element)
-
     def __getitem__(self, item):
         return self._children[item]
 
@@ -27,19 +23,6 @@ class BaseElement(object):
         for child in self._children:
             string += child.as_html()
         return string
-
-    @property
-    def text(self):
-        string = ''
-        for child in self._children:
-            string += child.text
-        return string
-
-    def print_index(self):
-        for child in self._children:
-            if child.tag in ('div', 'li') and 'id' in child.attrib:
-                print(child.attrib['id'])
-            child.print_index()
 
 
 class Document(BaseElement):
@@ -66,9 +49,6 @@ class Element(BaseElement):
 
     def set_parent(self, parent):
         self._parent = parent
-
-    def clean_parent(self):
-        self._parent = None
 
     def as_html(self):
         attributes = ''.join('%s="%s" ' % (key, value)
@@ -97,10 +77,6 @@ class Text(Element):
     def as_html(self):
         return self._text
 
-    @property
-    def text(self):
-        return self._text
-
 
 class Reference(Element):
 
@@ -125,10 +101,6 @@ class Anchor(Element):
 
     def set_href(self, href):
         self[self.anchor_element_index].attrib['href'] = href
-
-    @property
-    def name(self):
-        return self._anchor.name
 
     @property
     def number(self):
