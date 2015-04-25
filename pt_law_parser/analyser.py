@@ -176,9 +176,8 @@ class HierarchyParser():
                 self.root.append(paragraph)
             return  # blockquote added, ignore rest of it.
 
-        for format in hierarchy_order:
-            if not isinstance(paragraph, constants.hierarchy_classes[format]):
-                continue
+        if isinstance(paragraph, Anchor) and paragraph.name in constants.hierarchy_classes:
+            format = paragraph.name
 
             new_element = create_element(paragraph, format)
 
@@ -192,7 +191,6 @@ class HierarchyParser():
             for lower_format in hierarchy_order[
                                 hierarchy_order.index(format) + 1:]:
                 current_element[lower_format] = None
-            break
         else:  # is just text
             new_element = deepcopy(paragraph)
 
