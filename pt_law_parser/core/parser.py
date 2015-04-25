@@ -67,7 +67,7 @@ common_managers = [
     ObserverManager({'\n': observers.PartObserver}),
     ObserverManager({'\n': observers.TitleObserver}),
     ObserverManager({'\n': observers.ChapterObserver}),
-    ObserverManager({'\n': observers.ArticleAnchorObserver}),
-    ObserverManager({'\n': observers.NumberAnchorObserver}),
-    ObserverManager({'\n': observers.LineAnchorObserver}),
+    ObserverManager({'\n': observers.ArticleObserver}),
+    ObserverManager({'\n': observers.NumberObserver}),
+    ObserverManager({'\n': observers.LineObserver}),
 ]

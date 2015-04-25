@@ -4,8 +4,8 @@ from pt_law_parser.core.expressions import Token, DocumentReference, ArticleRefe
     NumberReference, LineReference, Article, Number, Line
 from pt_law_parser.core import parser
 from pt_law_parser.core.parser import ObserverManager
-from pt_law_parser.core.observers import DocumentsObserver, NumbersObserver, \
-    LineObserver, ArticlesObserver
+from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver, \
+    LineRefObserver, ArticleRefObserver
 
 
 class GeneralTestCase(unittest.TestCase):
@@ -20,7 +20,7 @@ class GeneralTestCase(unittest.TestCase):
 class TestDocuments(GeneralTestCase):
 
     def test_single(self):
-        managers = [ObserverManager({'Decreto-Lei': DocumentsObserver})]
+        managers = [ObserverManager({'Decreto-Lei': DocumentRefObserver})]
 
         self._test('Decreto-Lei nº 2/2013.', managers,
                    [(DocumentReference('2/2013', Token('Decreto-Lei')), 4)])
@@ -32,7 +32,7 @@ class TestDocuments(GeneralTestCase):
                    [(DocumentReference('2-A/2013', Token('Decreto-Lei')), 4)])
 
     def test_many(self):
-        managers = [ObserverManager({'Decretos-Leis': DocumentsObserver})]
+        managers = [ObserverManager({'Decretos-Leis': DocumentRefObserver})]
 
         self._test('Decretos-Leis n.os 1/2006, 2/2006, e 3/2006', managers,
                    [(DocumentReference('1/2006', Token('Decretos-Leis')), 4),
@@ -52,8 +52,8 @@ class TestDocuments(GeneralTestCase):
 
     def test_many_separated(self):
 
-        managers = [ObserverManager({'foo': DocumentsObserver,
-                                     'bar': DocumentsObserver})]
+        managers = [ObserverManager({'foo': DocumentRefObserver,
+                                     'bar': DocumentRefObserver})]
 
         string = 'foo 1/1. bar 2/1'
         expected = [(DocumentReference('1/1', Token('foo')), 2),
@@ -71,7 +71,7 @@ class TestDocuments(GeneralTestCase):
 class TestArticles(GeneralTestCase):
 
     def test_single(self):
-        managers = [ObserverManager({'artigo': ArticlesObserver})]
+        managers = [ObserverManager({'artigo': ArticleRefObserver})]
 
         self._test('no artigo 3º.', managers, [(ArticleReference('3º'), 4)])
 
@@ -82,8 +82,8 @@ class TestArticles(GeneralTestCase):
 
     def test_many(self):
 
-        managers = [ObserverManager({'artigo': ArticlesObserver,
-                                     'artigos': ArticlesObserver})]
+        managers = [ObserverManager({'artigo': ArticleRefObserver,
+                                     'artigos': ArticleRefObserver})]
 
         self._test('Os artigos 3º, 4º-A, 7º e 25º entram em vigor', managers,
                    [(ArticleReference('3º'), 4),
@@ -93,8 +93,8 @@ class TestArticles(GeneralTestCase):
 
     def test_with_document(self):
 
-        managers = [ObserverManager({'Decreto-Lei': DocumentsObserver}),
-                    ObserverManager({'artigos': ArticlesObserver})]
+        managers = [ObserverManager({'Decreto-Lei': DocumentRefObserver}),
+                    ObserverManager({'artigos': ArticleRefObserver})]
 
         doc = DocumentReference('2/2013', Token('Decreto-Lei'))
         self._test('Os artigos 3º, 4º-A, 7º e 25º do Decreto-Lei 2/2013,',
@@ -109,22 +109,22 @@ class TestArticles(GeneralTestCase):
 class TestNumbers(GeneralTestCase):
 
     def test_single(self):
-        managers = [ObserverManager({'nº': NumbersObserver})]
+        managers = [ObserverManager({'nº': NumberRefObserver})]
 
         self._test('no nº 2.', managers, [(NumberReference('2'), 4)])
         self._test('no nº 2,', managers, [(NumberReference('2'), 4)])
         self._test('no nº 2 ', managers, [(NumberReference('2'), 4)])
 
     def test_many(self):
-        managers = [ObserverManager({'n.os': NumbersObserver})]
+        managers = [ObserverManager({'n.os': NumberRefObserver})]
 
         self._test('Os n.os 1 e 3 deixam', managers, [(NumberReference('1'), 4),
                                                       (NumberReference('3'), 8)])
 
     def test_with_article(self):
-        managers = [ObserverManager({'artigo': ArticlesObserver}),
-                    ObserverManager({'nº': NumbersObserver,
-                                     'n.os': NumbersObserver})]
+        managers = [ObserverManager({'artigo': ArticleRefObserver}),
+                    ObserverManager({'nº': NumberRefObserver,
+                                     'n.os': NumberRefObserver})]
 
         art = ArticleReference('seguinte')
         self._test('no nº 2 do artigo seguinte', managers,
@@ -144,10 +144,10 @@ class TestNumbers(GeneralTestCase):
                    [(NumberReference('2', art), 4)])
 
     def test_with_document(self):
-        managers = [ObserverManager({'Decreto-Lei': DocumentsObserver}),
-                    ObserverManager({'artigo': ArticlesObserver}),
-                    ObserverManager({'nº': NumbersObserver,
-                                     'n.os': NumbersObserver})]
+        managers = [ObserverManager({'Decreto-Lei': DocumentRefObserver}),
+                    ObserverManager({'artigo': ArticleRefObserver}),
+                    ObserverManager({'nº': NumberRefObserver,
+                                     'n.os': NumberRefObserver})]
 
         doc = DocumentReference('2/2013', Token('Decreto-Lei'))
         art = ArticleReference('26º', doc)
@@ -159,7 +159,7 @@ class TestNumbers(GeneralTestCase):
 class TestLines(GeneralTestCase):
 
     def test_single(self):
-        managers = [ObserverManager({'alínea': LineObserver})]
+        managers = [ObserverManager({'alínea': LineRefObserver})]
 
         line = LineReference('f)')
         self._test('na alínea f).', managers, [(line, 4)])
@@ -167,7 +167,7 @@ class TestLines(GeneralTestCase):
         self._test('na alínea f) ', managers, [(line, 4)])
 
     def test_many(self):
-        managers = [ObserverManager({'alíneas': LineObserver})]
+        managers = [ObserverManager({'alíneas': LineRefObserver})]
 
         expectation = [(LineReference('f)'), 4), (LineReference('g)'), 8)]
 
@@ -188,10 +188,10 @@ class TestLines(GeneralTestCase):
         self._test('nas alíneas aa) e bb), como', managers, expectation)
 
     def test_with_parent(self):
-        managers = [ObserverManager({'artigo': ArticlesObserver}),
-                    ObserverManager({'nº': NumbersObserver}),
-                    ObserverManager({'alíneas': LineObserver,
-                                     'alínea': LineObserver})]
+        managers = [ObserverManager({'artigo': ArticleRefObserver}),
+                    ObserverManager({'nº': NumberRefObserver}),
+                    ObserverManager({'alíneas': LineRefObserver,
+                                     'alínea': LineRefObserver})]
 
         parent = NumberReference('4')
         self._test('na alínea f) do nº 4.', managers,
@@ -213,10 +213,10 @@ class TestLines(GeneralTestCase):
                     (LineReference('g)', parent), 8), (parent, 14)])
 
     def test_with_document(self):
-        managers = [ObserverManager({'Decreto-Lei': DocumentsObserver}),
-                    ObserverManager({'artigo': ArticlesObserver}),
-                    ObserverManager({'nº': NumbersObserver}),
-                    ObserverManager({'alíneas': LineObserver})]
+        managers = [ObserverManager({'Decreto-Lei': DocumentRefObserver}),
+                    ObserverManager({'artigo': ArticleRefObserver}),
+                    ObserverManager({'nº': NumberRefObserver}),
+                    ObserverManager({'alíneas': LineRefObserver})]
 
         document = DocumentReference('2/2013', Token('Decreto-Lei'))
         article = ArticleReference('26º', document)

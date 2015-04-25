@@ -24,8 +24,8 @@ def parse(text):
     type_names = ['Decreto-Lei', 'Lei', 'Declaração de Rectificação', 'Portaria']
 
     managers = parser.common_managers + [
-        parser.ObserverManager(dict((name, observers.DocumentsObserver) for name in type_names)),
-        parser.ObserverManager(dict((name, observers.ArticlesObserver) for name in ['artigo', 'artigos']))]
+        parser.ObserverManager(dict((name, observers.DocumentRefObserver) for name in type_names)),
+        parser.ObserverManager(dict((name, observers.ArticleRefObserver) for name in ['artigo', 'artigos']))]
 
     terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
     for manager in managers:

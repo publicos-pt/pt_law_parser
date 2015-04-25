@@ -42,10 +42,10 @@ class Observer(object):
         self._is_done = True
 
 
-class DocumentsObserver(Observer):
+class DocumentRefObserver(Observer):
 
     def __init__(self, index, token):
-        super(DocumentsObserver, self).__init__(index, token)
+        super(DocumentRefObserver, self).__init__(index, token)
 
         self._numbers = {}
 
@@ -66,11 +66,11 @@ class DocumentsObserver(Observer):
             result[i] = DocumentReference(self._numbers[i].as_str(), type_token)
 
 
-class ArticlesObserver(Observer):
+class ArticleRefObserver(Observer):
     klass = ArticleReference
 
     def __init__(self, index, token):
-        super(ArticlesObserver, self).__init__(index, token)
+        super(ArticleRefObserver, self).__init__(index, token)
         self._numbers = {}
         self._parent = None
 
@@ -97,7 +97,7 @@ class ArticlesObserver(Observer):
             result[i] = self.klass(self._numbers[i].as_str(), parent)
 
 
-class NumbersObserver(ArticlesObserver):
+class NumberRefObserver(ArticleRefObserver):
     klass = NumberReference
 
     def observe(self, index, token, caught):
@@ -118,7 +118,7 @@ class NumbersObserver(ArticlesObserver):
         return False
 
 
-class LineObserver(ArticlesObserver):
+class LineRefObserver(ArticleRefObserver):
     klass = LineReference
 
     def observe(self, index, token, caught):
@@ -194,44 +194,44 @@ def common_rules(name, regex):
             lambda x: x == '\n']
 
 
-class ArticleAnchorObserver(AnchorObserver):
+class ArticleObserver(AnchorObserver):
     anchor_klass = Article
     rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX)
     number_at = 3
     take_up_to = 5
 
 
-class SubSectionObserver(ArticleAnchorObserver):
+class SubSectionObserver(ArticleObserver):
     anchor_klass = SubSection
     rules = common_rules(SubSection.name, '[IVX]*')
 
 
-class SectionObserver(ArticleAnchorObserver):
+class SectionObserver(ArticleObserver):
     anchor_klass = Section
     rules = common_rules(Section.name, '[IVX]*')
 
 
-class PartObserver(ArticleAnchorObserver):
+class PartObserver(ArticleObserver):
     anchor_klass = Part
     rules = common_rules(anchor_klass.name, '[IVX]*')
 
 
-class ChapterObserver(ArticleAnchorObserver):
+class ChapterObserver(ArticleObserver):
     anchor_klass = Chapter
     rules = common_rules(Chapter.name, '[IVX]*')
 
 
-class AnnexObserver(ArticleAnchorObserver):
+class AnnexObserver(ArticleObserver):
     anchor_klass = Annex
     rules = common_rules(Annex.name, '[IVX]*')
 
 
-class TitleObserver(ArticleAnchorObserver):
+class TitleObserver(ArticleObserver):
     anchor_klass = Title
     rules = common_rules(Title.name, '[IVX]*')
 
 
-class NumberAnchorObserver(AnchorObserver):
+class NumberObserver(AnchorObserver):
     anchor_klass = Number
     rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
              lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
@@ -239,7 +239,7 @@ class NumberAnchorObserver(AnchorObserver):
     take_up_to = 4
 
 
-class LineAnchorObserver(AnchorObserver):
+class LineObserver(AnchorObserver):
     anchor_klass = Line
     rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
              lambda x: x == ' ']
