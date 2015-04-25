@@ -3,16 +3,17 @@ import re
 from .tokenizer import tokenize
 from .expressions import Token, Expression, \
     DocumentReference, ArticleReference, NumberReference, LineReference, \
-    Article, Number
+    Article, Number, Line
 
 
 BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
 BASE_NUMBER_REGEX = '\d'
+BASE_LINE_REGEX = '[\da-z]*\)'
 
 DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d+(?:/[A-Z]*)?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
 NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_NUMBER_REGEX
-LINE_REGEX = '^[\da-z]*\)$'
+LINE_REGEX = '^%s$' % BASE_LINE_REGEX
 
 
 class Observer(object):
@@ -180,6 +181,7 @@ class AnchorObserver(Observer):
     anchor_klass = None
     rules = []
     number_at = None
+    take_up_to = None
 
     def __init__(self, index, token):
         super(AnchorObserver, self).__init__(index, token)
@@ -195,15 +197,16 @@ class AnchorObserver(Observer):
                 self._is_valid[0] = True
             return
 
-        for i in range(1, len(self.rules)):
-            if self._is_valid[i]:
+        for rule in range(1, len(self.rules)):
+            if self._is_valid[rule]:
                 continue
-            if self._is_valid[i - 1] and self.rules[i](token.as_str()):
-                if i == len(self.rules):
+            if self._is_valid[rule - 1] and self.rules[rule](token.as_str()):
+                # if last rule, is done
+                if rule == len(self.rules):
                     self._is_done = True
                     return
-                self._is_valid[i] = True
-                if i == self.number_at:
+                self._is_valid[rule] = True
+                if rule == self.number_at:
                     self._number = token.as_str()
                     self._number_index = index
                 break
@@ -216,7 +219,7 @@ class AnchorObserver(Observer):
     def replace_in(self, result):
         if self._number is not None:
             assert(self._number_index == self._index + self.number_at)
-            for i in reversed(range(2, len(self.rules))):
+            for i in reversed(range(2, self.take_up_to)):
                 result[self._index + i] = Token('')  # '\n'
             result[self._index + 1] = self.anchor_klass(self._number)
 
@@ -227,6 +230,7 @@ class ArticleAnchorObserver(AnchorObserver):
              lambda x: x == ' ', lambda x: re.match(BASE_ARTICLE_NUMBER_REGEX, x),
              lambda x: x == '\n']
     number_at = 3
+    take_up_to = 5
 
 
 class NumberAnchorObserver(AnchorObserver):
@@ -234,6 +238,15 @@ class NumberAnchorObserver(AnchorObserver):
     rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
              lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
     number_at = 1
+    take_up_to = 4
+
+
+class LineAnchorObserver(AnchorObserver):
+    anchor_klass = Line
+    rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
+             lambda x: x == ' ']
+    number_at = 1
+    take_up_to = 2
 
 
 class ArticleObserverManager(ObserverManager):
@@ -244,6 +257,11 @@ class ArticleObserverManager(ObserverManager):
 class NumberObserverManager(ObserverManager):
     def __init__(self):
         super(NumberObserverManager, self).__init__({'\n': NumberAnchorObserver})
+
+
+class LineObserverManager(ObserverManager):
+    def __init__(self):
+        super(LineObserverManager, self).__init__({'\n': LineAnchorObserver})
 
 
 def parse(string, managers, terms=set()):

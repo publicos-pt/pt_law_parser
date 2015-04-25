@@ -1,10 +1,10 @@
 import unittest
 
 from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, Article, Number
+    NumberReference, LineReference, Article, Number, Line
 from pt_law_parser.core.parser import parse, DocumentsObserver, \
     ObserverManager, ArticlesObserver, NumbersObserver, LineObserver, \
-    ArticleObserverManager, NumberObserverManager
+    ArticleObserverManager, NumberObserverManager, LineObserverManager
 
 
 class GeneralTestCase(unittest.TestCase):
@@ -244,3 +244,12 @@ class TestAnchorNumber(GeneralTestCase):
 
         line = Number('1')
         self._test('\n1 - test\n', managers, [(line, 1)])
+
+
+class TestAnchorLine(GeneralTestCase):
+
+    def test_simple(self):
+        managers = [LineObserverManager()]
+
+        line = Line('a)')
+        self._test('\na) test\n', managers, [(line, 1)])

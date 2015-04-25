@@ -129,4 +129,11 @@ class Number(Anchor):
     name = 'Número'
 
     def as_str(self):
-        return '%s - ' % self._number
+        return '%s -' % self._number
+
+
+class Line(Anchor):
+    name = 'Alínea'
+
+    def as_str(self):
+        return '%s' % self._number

@@ -105,27 +105,45 @@ class Reference(Element):
 
 
 class Anchor(Element):
+    def __init__(self, tag):
+        super(Anchor, self).__init__(tag)
+        self.anchor_element_index = None
+
+    def set_href(self, href):
+        self[self.anchor_element_index].attrib['href'] = href
+
+
+class Article(Anchor):
 
     def __init__(self, anchor):
-        assert(isinstance(anchor, expressions.Anchor))
-        super(Anchor, self).__init__('p')
+        assert(isinstance(anchor, expressions.Article))
+        super(Article, self).__init__('a')
         self.append(Text(anchor.name + ' '))
         number = Element('a')
         number.append(Text(anchor.number))
         self.append(number)
         self.anchor_element_index = 1
 
-    def set_href(self, href):
-        self[self.anchor_element_index].attrib['href'] = href
 
-
-class SpanAnchor(Anchor):
+class Number(Anchor):
 
     def __init__(self, anchor):
-        assert(isinstance(anchor, expressions.Anchor))
-        super(Anchor, self).__init__('span')
+        assert(isinstance(anchor, expressions.Number))
+        super(Number, self).__init__('span')
         number = Element('a')
-        number.append(Text(anchor.number))
+        number.append(Text(anchor.as_str()))
         self.append(number)
-        self.append(Text(' - '))
+        self.append(Text(' '))
+        self.anchor_element_index = 0
+
+
+class Line(Anchor):
+
+    def __init__(self, anchor):
+        assert(isinstance(anchor, expressions.Line))
+        super(Line, self).__init__('span')
+        number = Element('a')
+        number.append(Text(anchor.as_str()))
+        self.append(number)
+        self.append(Text(' '))
         self.anchor_element_index = 0

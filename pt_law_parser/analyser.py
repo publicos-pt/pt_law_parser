@@ -1,14 +1,16 @@
 import re
 from copy import deepcopy
 
-from .html import Document, Element, Text, Reference, SpanAnchor, Anchor
+from .html import Document, Element, Text, Reference, Anchor, Article, Number, Line
 
 from pt_law_parser.core import parser, expressions
 from pt_law_parser import constants
 
 
-anchor_mapping = {expressions.Number: SpanAnchor,
-                  expressions.Article: Anchor}
+anchor_mapping = {
+    expressions.Line: Line,
+    expressions.Number: Number,
+    expressions.Article: Article}
 
 
 def parse(text):
@@ -17,6 +19,7 @@ def parse(text):
     managers = [
         parser.ObserverManager(dict((name, parser.DocumentsObserver) for name in type_names)),
         parser.ArticleObserverManager(), parser.NumberObserverManager(),
+        parser.LineObserverManager(),
         parser.ObserverManager(dict((name, parser.ArticlesObserver) for name in ['artigo', 'artigos']))]
 
     terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
@@ -61,8 +64,9 @@ def analyse(tokens):
             paragraph = Element('p')
             if isinstance(token, expressions.Anchor):
                 anchor_class = anchor_mapping[type(token)]
-                p.add(anchor_class(token))
-                if anchor_class == SpanAnchor:
+                element = anchor_class(token)
+                p.add(element)
+                if element.tag == 'span':
                     paragraph = Element('span')
         else:
             if isinstance(token, expressions.Reference):

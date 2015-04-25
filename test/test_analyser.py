@@ -29,7 +29,7 @@ class TestCase(unittest.TestCase):
                'charset=utf-8"></head>' + result.as_html() + '</html>'
 
         # pretty print to facilitate visualization
-        html = html.replace('<div', '\n<div').replace('<p', '\n<p')
+        html = html.replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
 
         with open(file_dir + '%d.html' % publication['dre_id']) as f:
             expected_html = f.read()
