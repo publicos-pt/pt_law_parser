@@ -74,6 +74,9 @@ class Element(BaseElement):
         return '<{0} {1}>{2}</{0}>'.format(self.tag, attributes,
                                            super(Element, self).as_html())
 
+    def set_id(self, id):
+        self.attrib['id'] = id
+
 
 class Text(Element):
 
@@ -113,10 +116,26 @@ class Anchor(Element):
         number = Element('a')
         number.append(Text(anchor.number))
         self.append(number)
+        self.anchor_element_index = 1
 
-    def set_id(self, id):
-        self[-1].attrib['id'] = id
-        self[-1].attrib['href'] = '#' + id
+    def set_href(self, href):
+        self[self.anchor_element_index].attrib['href'] = href
+
+
+class SpanAnchor(Anchor):
+
+    def __init__(self, anchor):
+        assert(isinstance(anchor, expressions.Anchor))
+        super(Anchor, self).__init__('span')
+        number = Element('a')
+        number.append(Text(anchor.number))
+        self.append(number)
+        self.append(Text(' - '))
+        self.anchor_element_index = 0
+
+
+anchor_mapping = {expressions.Number: SpanAnchor,
+                  expressions.Article: Anchor}
 
 
 def parse(text):
@@ -124,8 +143,8 @@ def parse(text):
 
     managers = [
         parser.ObserverManager(dict((name, parser.DocumentsObserver) for name in type_names)),
-                parser.AnchorObserverManager(),
-                parser.ObserverManager(dict((name, parser.ArticlesObserver) for name in ['artigo', 'artigos']))]
+        parser.ArticleObserverManager(), parser.NumberObserverManager(),
+        parser.ObserverManager(dict((name, parser.ArticlesObserver) for name in ['artigo', 'artigos']))]
 
     terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
     for manager in managers:
@@ -166,7 +185,7 @@ def analyse(tokens):
             if len(paragraph):
                 p.add(paragraph)
             if isinstance(token, expressions.Anchor):
-                p.add(Anchor(token))
+                p.add(anchor_mapping[type(token)](token))
             paragraph = Element('p')
         else:
             if isinstance(token, expressions.Reference):
@@ -222,19 +241,23 @@ class HierarchyParser():
             else:
                 add_element(self.root, element)
 
-        def add_id(element, format):
+        def add_id(element, anchor, format):
+            assert(isinstance(anchor, Anchor))
             prefix = ''
             for index in reversed(range(constants.formal_hierarchy_elements.index(format))):
                 temp_format = constants.formal_hierarchy_elements[index]
                 if current_element[temp_format]:
-                    prefix = current_element[temp_format]['id'] + '-'
+                    prefix = current_element[temp_format].attrib['id'] + '-'
                     break
 
             suffix = ''
             if format_number:
                 suffix = '-' + format_number
 
-            element.set_id(prefix + constants.hierarchy_ids[format] + suffix)
+            id = prefix + constants.hierarchy_ids[format] + suffix
+
+            element.set_id(id)
+            anchor.set_href('#' + id)
 
         def create_element(element, format):
             # create new tag for `div` or `li`.
@@ -250,11 +273,11 @@ class HierarchyParser():
                 # if format is title, create it.
                 current_element_title = Element(constants.hierarchy_html_titles[format],
                                                 attrib={'class': 'title'})
-                current_element_title.append(deepcopy(element))
+                current_element_title.append(element)
 
                 new_element.append(current_element_title)
             else:
-                new_element.append(deepcopy(element))
+                new_element.append(element)
 
             return new_element
 
@@ -272,10 +295,10 @@ class HierarchyParser():
                 continue
             format_number = search.group(1).strip()
 
-            if self._add_links and isinstance(paragraph, Anchor):
-                add_id(paragraph, format)
-
             new_element = create_element(paragraph, format)
+
+            if self._add_links and isinstance(paragraph, Anchor):
+                add_id(new_element, paragraph, format)
 
             add_element_to_hierarchy(new_element, format)
 

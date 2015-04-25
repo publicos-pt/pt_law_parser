@@ -3,13 +3,15 @@ import re
 from .tokenizer import tokenize
 from .expressions import Token, Expression, \
     DocumentReference, ArticleReference, NumberReference, LineReference, \
-    ArticleAnchor
+    Article, Number
 
 
 BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
+BASE_NUMBER_REGEX = '\d'
+
 DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d+(?:/[A-Z]*)?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
-NUMBER_REGEX = '^\d$|^anterior$|^seguinte$'
+NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_NUMBER_REGEX
 LINE_REGEX = '^[\da-z]*\)$'
 
 
@@ -175,17 +177,16 @@ class ObserverManager(object):
 
 
 class AnchorObserver(Observer):
-    _regex = BASE_ARTICLE_NUMBER_REGEX
-    anchor_klass = ArticleAnchor
+    anchor_klass = None
+    rules = []
+    number_at = None
 
     def __init__(self, index, token):
         super(AnchorObserver, self).__init__(index, token)
         self._number = None
         self._number_index = None
 
-        self._rules = [lambda x: x == '\n', lambda x: x == self.anchor_klass.name,
-                       lambda x: x == ' ', lambda x: re.match(self._regex, x)]
-        self._is_valid = [False, False, False, False]
+        self._is_valid = [False for _ in range(len(self.rules))]
 
     def observe(self, index, token, caught):
 
@@ -194,12 +195,15 @@ class AnchorObserver(Observer):
                 self._is_valid[0] = True
             return
 
-        for i in range(1, len(self._rules)):
+        for i in range(1, len(self.rules)):
             if self._is_valid[i]:
                 continue
-            if self._is_valid[i - 1] and self._rules[i](token.as_str()):
+            if self._is_valid[i - 1] and self.rules[i](token.as_str()):
+                if i == len(self.rules):
+                    self._is_done = True
+                    return
                 self._is_valid[i] = True
-                if i == 3:
+                if i == self.number_at:
                     self._number = token.as_str()
                     self._number_index = index
                 break
@@ -209,24 +213,37 @@ class AnchorObserver(Observer):
                 self._is_done = True
                 break
 
-        if self._is_valid[3] and token.as_str() == '\n':
-            self._is_done = True
-
     def replace_in(self, result):
         if self._number is not None:
-            assert(self._number_index == self._index + 3)
-            result[self._index + 4] = Token('')  # '\n'
-            result[self._index + 3] = Token('')  # number
-            result[self._index + 2] = Token('')  # ' '
+            assert(self._number_index == self._index + self.number_at)
+            for i in reversed(range(2, len(self.rules))):
+                result[self._index + i] = Token('')  # '\n'
             result[self._index + 1] = self.anchor_klass(self._number)
 
 
-class AnchorObserverManager(ObserverManager):
-    _observer = AnchorObserver
+class ArticleAnchorObserver(AnchorObserver):
+    anchor_klass = Article
+    rules = [lambda x: x == '\n', lambda x: x == Article.name,
+             lambda x: x == ' ', lambda x: re.match(BASE_ARTICLE_NUMBER_REGEX, x),
+             lambda x: x == '\n']
+    number_at = 3
 
+
+class NumberAnchorObserver(AnchorObserver):
+    anchor_klass = Number
+    rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
+             lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
+    number_at = 1
+
+
+class ArticleObserverManager(ObserverManager):
     def __init__(self):
-        super(AnchorObserverManager, self).__init__(
-            {'\n': self._observer})
+        super(ArticleObserverManager, self).__init__({'\n': ArticleAnchorObserver})
+
+
+class NumberObserverManager(ObserverManager):
+    def __init__(self):
+        super(NumberObserverManager, self).__init__({'\n': NumberAnchorObserver})
 
 
 def parse(string, managers, terms=set()):

@@ -121,5 +121,12 @@ class Anchor(Token):
         return self._number
 
 
-class ArticleAnchor(Anchor):
+class Article(Anchor):
     name = 'Artigo'
+
+
+class Number(Anchor):
+    name = 'Número'
+
+    def as_str(self):
+        return '%s - ' % self._number
