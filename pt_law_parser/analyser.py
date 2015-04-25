@@ -85,7 +85,7 @@ def analyse(tokens):
 class HierarchyParser():
     def __init__(self, root, add_links=True):
         self.current_element = dict([(format, None) for
-                                     format in constants.html_classes])
+                                     format in constants.hierarchy_order])
         self.previous_element = None
         self.root = root
         self._add_links = add_links
@@ -147,12 +147,11 @@ class HierarchyParser():
 
         def create_element(element, format):
             # create new tag for `div` or `li`.
+            attrib = {'class': constants.html_classes[format]}
             if format in constants.html_lists:
-                new_element = Element(constants.html_lists[format],
-                                      attrib={'class': constants.html_classes[format]})
+                new_element = Element(constants.html_lists[format], attrib=attrib)
             else:
-                new_element = Element('div',
-                                      attrib={'class': constants.html_classes[format]})
+                new_element = Element('div', attrib=attrib)
 
             # and put the element in the newly created tag.
             if format in constants.hierarchy_html_titles:
@@ -176,8 +175,8 @@ class HierarchyParser():
                 self.root.append(paragraph)
             return  # blockquote added, ignore rest of it.
 
-        if isinstance(paragraph, Anchor) and paragraph.name in constants.hierarchy_classes:
-            format = paragraph.name
+        if isinstance(paragraph, Anchor) and paragraph.format in constants.hierarchy_classes:
+            format = paragraph.format
 
             new_element = create_element(paragraph, format)
 

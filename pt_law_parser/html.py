@@ -132,6 +132,10 @@ class Anchor(Element):
     def number(self):
         return self._anchor.number
 
+    @property
+    def format(self):
+        return self._anchor.__class__
+
 
 class Article(Anchor):
     def __init__(self, anchor):

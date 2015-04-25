@@ -1,59 +1,50 @@
-from pt_law_parser.html import Number, Line, Article, Section, Annex
+from pt_law_parser.core.expressions import *
 
-hierarchy_order = ['Anexo',
-                   'Parte',
-                   'Título',
-                   'Capítulo',
-                   'Secção',
-                   'Sub-Secção',
-                   'Artigo',
-                   'Número',
-                   'Alínea']
+from pt_law_parser import html
 
-html_classes = {'Anexo': 'anexo',
-                'Parte': 'parte',
-                'Título': 'titulo',
-                'Capítulo': 'capitulo',
-                'Secção': 'seccao',
-                'Sub-Secção': 'subseccao',
-                'Artigo': 'artigo',
-                'Número': 'numero list-unstyled',
-                'Alínea': 'alinea list-unstyled'}
+hierarchy_order = [
+    Annex, Part, Title, Chapter, Section, SubSection, Article, Number, Line]
 
-hierarchy_ids = {'Anexo': 'anexo',
-                 'Parte': 'parte',
-                 'Título': 'titulo',
-                 'Capítulo': 'capitulo',
-                 'Secção': 'seccao',
-                 'Sub-Secção': 'subseccao',
-                 'Artigo': 'artigo',
-                 'Número': 'numero',
-                 'Alínea': 'alinea'}
+html_classes = {Annex: 'annex',
+                Part: 'part',
+                Title: 'title',
+                Chapter: 'chapter',
+                Section: 'section',
+                SubSection: 'sub-section',
+                Article: 'article',
+                Number: 'number list-unstyled',
+                Line: 'line list-unstyled'}
 
+hierarchy_ids = {Annex: 'anexo',
+                 Part: 'parte',
+                 Title: 'titulo',
+                 Chapter: 'capitulo',
+                 Section: 'seccao',
+                 SubSection: 'subseccao',
+                 Article: 'artigo',
+                 Number: 'numero',
+                 Line: 'alinea'}
 
-hierarchy_classes_with_titles = ['anexo', 'parte', 'titulo', 'capitulo',
-                                 'seccao', 'subseccao', 'artigo']
+hierarchy_html_titles = {Part: 'h2',
+                         Title: 'h3',
+                         Chapter: 'h3',
+                         Section: 'h4',
+                         SubSection: 'h5',
+                         Annex: 'h2',
+                         Article: 'h5'}
 
-hierarchy_html_titles = {'Parte': 'h2',
-                         'Título': 'h3',
-                         'Capítulo': 'h3',
-                         'Secção': 'h4',
-                         'Sub-Secção': 'h5',
-                         'Anexo': 'h2',
-                         'Artigo': 'h5'}
+html_lists = {Number: 'li', Line: 'li'}
 
-html_lists = {'Número': 'li', 'Alínea': 'li'}
-
-formal_hierarchy_elements = ['Anexo', 'Artigo', 'Número', 'Alínea']
+formal_hierarchy_elements = [Annex, Article, Number, Line]
 
 
-hierarchy_classes = {'Anexo': Annex,
-                     'Parte': Section,
-                     'Título': Section,
-                     'Capítulo': Section,
-                     'Secção': Section,
-                     'Sub-Secção': Section,
-                     'Artigo': Article,
-                     'Número': Number,
-                     'Alínea': Line,
+hierarchy_classes = {Annex: html.Annex,
+                     Part: html.Section,
+                     Title: html.Section,
+                     Chapter: html.Section,
+                     Section: html.Section,
+                     SubSection: html.Section,
+                     Article: html.Article,
+                     Number: html.Number,
+                     Line: html.Line,
                      }
