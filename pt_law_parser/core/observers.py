@@ -1,7 +1,7 @@
 import re
 
 from .expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, \
+    NumberReference, LineReference, EULawReference, \
     Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection
 
 
@@ -13,6 +13,7 @@ DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d{4}(?:/[A-Z]+)?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
 NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_NUMBER_REGEX
 LINE_REGEX = '^%s$' % BASE_LINE_REGEX
+EULAW_NUMBER_REGEX = '^\d{4}/\d+/(?:CE|UE)$'
 
 
 class Observer(object):
@@ -139,6 +140,26 @@ class LineRefObserver(ArticleRefObserver):
             self._parent = index
 
         return False
+
+
+class EULawRefObserver(Observer):
+    def __init__(self, index, token):
+        super(EULawRefObserver, self).__init__(index, token)
+
+        self._number = None
+        self._index = None
+
+    def observe(self, index, token, caught):
+        if not caught and re.match(EULAW_NUMBER_REGEX, token.as_str()):
+            self._number = token
+            self._index = index
+            self._is_done = True
+            return True
+        return False
+
+    def replace_in(self, result):
+        if self._number is not None:
+            result[self._index] = EULawReference(self._number.as_str())
 
 
 class AnchorObserver(Observer):

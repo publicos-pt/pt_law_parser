@@ -1,11 +1,11 @@
 import unittest
 
 from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, Article, Number, Line
+    NumberReference, LineReference, Article, Number, Line, EULawReference
 from pt_law_parser.core import parser
 from pt_law_parser.core.parser import ObserverManager
 from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver, \
-    LineRefObserver, ArticleRefObserver
+    LineRefObserver, ArticleRefObserver, EULawRefObserver
 from pt_law_parser.normalizer import replace_eu_links
 
 
@@ -228,6 +228,19 @@ class TestLines(GeneralTestCase):
                    [(LineReference('f)', number), 4),
                     (LineReference('g)', number), 8), (number, 14),
                     (article, 20), (document, 28)])
+
+
+class TestEULaw(GeneralTestCase):
+
+    def test_single(self):
+        managers = [ObserverManager({'nº': EULawRefObserver})]
+
+        self._test('nº 2011/778/UE ', managers, [(EULawReference('2011/778/UE'),
+                                                  2)])
+        self._test('nº 2000/29/CE,', managers, [(EULawReference('2000/29/CE'),
+                                                 2)])
+        self._test('nº 2000/778/UE.', managers, [(EULawReference('2000/778/UE'),
+                                                  2)])
 
 
 class TestAnchorArticle(GeneralTestCase):

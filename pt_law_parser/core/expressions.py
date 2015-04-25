@@ -89,6 +89,13 @@ class ArticleReference(Reference):
         return 'Artigo %s' % self.number
 
 
+class EULawReference(Reference):
+
+    def __init__(self, number):
+        super(EULawReference, self).__init__(number)
+        assert isinstance(number, str)
+
+
 class Anchor(Token):
     name = None
 
