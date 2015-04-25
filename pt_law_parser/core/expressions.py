@@ -1,10 +1,18 @@
-class AbstractCompilable(object):
-    """
-    An abstract class that defines an API to transform itself into other types
-    of expressions.
-    """
+class Token(object):
+
+    def __init__(self, string):
+        assert isinstance(string, str)
+        self._string = string
+
+    @property
+    def string(self):
+        return self._string
+
     def as_str(self):
-        raise NotImplementedError
+        return self.string
+
+    def __str__(self):
+        return self.as_str()
 
     def __eq__(self, other):
         if isinstance(other, str):
@@ -22,23 +30,6 @@ class AbstractCompilable(object):
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
-
-
-class Token(AbstractCompilable):
-
-    def __init__(self, string):
-        assert isinstance(string, str)
-        self._string = string
-
-    @property
-    def string(self):
-        return self._string
-
-    def as_str(self):
-        return self.string
-
-    def __str__(self):
-        return self.as_str()
 
 
 class Reference(Token):
