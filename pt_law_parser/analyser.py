@@ -1,5 +1,3 @@
-from copy import deepcopy
-
 from .html import Document, Element, Text, Reference, Anchor
 
 from pt_law_parser.core import parser, expressions, observers
@@ -176,21 +174,19 @@ class HierarchyParser():
         self.previous_element = new_element
 
     def add_paragraph(self, paragraph):
-        new_element = deepcopy(paragraph)
-
         # previous has children and child is an Element with a 'title'
         # => new_element is a title of the previous element.
         if self.previous_element and len(self.previous_element) and \
                 isinstance(self.previous_element[0], Element) and \
                 'title' in self.previous_element[0].attrib.get("class", []):
-            self.previous_element[0].append(new_element)
+            self.previous_element[0].append(paragraph)
         else:
             # add to last non-None format
             for format in reversed(constants.hierarchy_order):
                 if self.current_element[format] is not None:
-                    self.current_element[format].append(new_element)
+                    self.current_element[format].append(paragraph)
                     break
             else:
-                self.root.append(new_element)
+                self.root.append(paragraph)
 
-        self.previous_element = new_element
+        self.previous_element = paragraph
