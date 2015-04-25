@@ -104,3 +104,17 @@ class ArticleReference(Reference):
 
     def __str__(self):
         return 'Artigo %s' % self.number
+
+
+class Anchor(Token):
+    name = None
+
+    def __init__(self, string):
+        super(Anchor, self).__init__('%s %s' % (self.name, string))
+
+    def as_str(self):
+        return '%s\n' % self.string
+
+
+class ArticleAnchor(Anchor):
+    name = 'Artigo'
