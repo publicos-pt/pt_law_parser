@@ -166,7 +166,7 @@ class AnchorObserver(Observer):
                 continue
             if self._is_valid[rule - 1] and self.rules[rule](token.as_str()):
                 # if last rule, is done
-                if rule == len(self.rules):
+                if rule == len(self.rules) - 1:
                     self._is_done = True
                     return
                 self._is_valid[rule] = True
