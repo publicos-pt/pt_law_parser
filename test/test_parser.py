@@ -11,7 +11,7 @@ from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver,
 class GeneralTestCase(unittest.TestCase):
     def _test(self, string, managers, expected):
         result = parser.parse(string, managers, {' ', '.', ',', '\n', 'n.os'})
-        self.assertEqual(string, result.as_str())
+        self.assertEqual(string, ''.join(v.as_str() for v in result))
 
         for exp, index, in expected:
             self.assertEqual(result[index], exp)

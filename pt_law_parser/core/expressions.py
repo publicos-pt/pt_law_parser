@@ -24,14 +24,6 @@ class AbstractCompilable(object):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
 
 
-class Expression(list, AbstractCompilable):
-    """
-    A general expression.
-    """
-    def as_str(self):
-        return ''.join(v.as_str() for v in self)
-
-
 class Token(AbstractCompilable):
 
     def __init__(self, string):

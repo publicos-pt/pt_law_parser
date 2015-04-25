@@ -1,8 +1,6 @@
 from pt_law_parser.core import observers
 from .tokenizer import tokenize
 
-from .expressions import Expression
-
 
 class ObserverManager(object):
     def __init__(self, rules):
@@ -40,7 +38,7 @@ class ObserverManager(object):
 
 
 def parse(string, managers, terms=set()):
-    result = Expression()
+    result = []
 
     for manager in managers:
         terms |= manager.terms
