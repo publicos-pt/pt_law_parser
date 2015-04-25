@@ -6,6 +6,7 @@ from pt_law_parser.core import parser
 from pt_law_parser.core.parser import ObserverManager
 from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver, \
     LineRefObserver, ArticleRefObserver
+from pt_law_parser.normalizer import replace_eu_links
 
 
 class GeneralTestCase(unittest.TestCase):
@@ -254,3 +255,19 @@ class TestAnchorLine(GeneralTestCase):
 
         line = Line('a)')
         self._test('\na) test\n', managers, [(line, 1)])
+
+
+class TestNormalizer(unittest.TestCase):
+
+    def test_law(self):
+        string = '<a rel="nofollow" target="_blank">' \
+                 'Decisão de Execução nº 2014/368/UE</a>'
+
+        self.assertEqual(replace_eu_links(string),
+                         'Decisão de Execução nº 2014/368/UE')
+
+        string += ' || <a>Decisão de Execução nº 2011/778/UE</a>'
+
+        self.assertEqual(replace_eu_links(string),
+                         'Decisão de Execução nº 2014/368/UE || '
+                         'Decisão de Execução nº 2011/778/UE')

@@ -1,9 +1,15 @@
 import re
 
 
+def replace_eu_links(text):
+    return re.sub('<a.*?>(.*?)</a>', lambda m: m.group(1), text)
+
+
 def normalize(text):
 
     text = ' '.join(text.split())
+
+    text = replace_eu_links(text)
 
     # substitute <br/> by </p><p>
     text = text.replace("<br />", "<br/>")
