@@ -51,8 +51,8 @@ class Element(BaseElement):
         self._parent = parent
 
     def as_html(self):
-        attributes = ''.join('%s="%s" ' % (key, value)
-                             for (key, value) in self._attrib.items())
+        attributes = ' '.join('%s="%s"' % (key, value)
+                              for (key, value) in self._attrib.items())
         if attributes:
             attributes = ' ' + attributes
 
