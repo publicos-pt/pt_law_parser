@@ -1,24 +1,24 @@
 from pt_law_parser.html import Number, Line, Article, Section, Annex
 
-hierarchy_priority = ['Anexo',
-                      'Parte',
-                      'Título',
-                      'Capítulo',
-                      'Secção',
-                      'Sub-Secção',
-                      'Artigo',
-                      'Número',
-                      'Alínea']
+hierarchy_order = ['Anexo',
+                   'Parte',
+                   'Título',
+                   'Capítulo',
+                   'Secção',
+                   'Sub-Secção',
+                   'Artigo',
+                   'Número',
+                   'Alínea']
 
-hierarchy_html_classes = {'Anexo': 'anexo',
-                          'Parte': 'parte',
-                          'Título': 'titulo',
-                          'Capítulo': 'capitulo',
-                          'Secção': 'seccao',
-                          'Sub-Secção': 'subseccao',
-                          'Artigo': 'artigo',
-                          'Número': 'numero list-unstyled',
-                          'Alínea': 'alinea list-unstyled'}
+html_classes = {'Anexo': 'anexo',
+                'Parte': 'parte',
+                'Título': 'titulo',
+                'Capítulo': 'capitulo',
+                'Secção': 'seccao',
+                'Sub-Secção': 'subseccao',
+                'Artigo': 'artigo',
+                'Número': 'numero list-unstyled',
+                'Alínea': 'alinea list-unstyled'}
 
 hierarchy_ids = {'Anexo': 'anexo',
                  'Parte': 'parte',
@@ -42,18 +42,7 @@ hierarchy_html_titles = {'Parte': 'h2',
                          'Anexo': 'h2',
                          'Artigo': 'h5'}
 
-hierarchy_html_lists = {'Número': 'li', 'Alínea': 'li'}
-
-hierarchy_regex = {'Anexo': '^Anexo(.*)',
-                   'Parte': '^Parte(.*)',
-                   'Título': '^Título(.*)',
-                   'Capítulo': '^Capítulo (.*)',
-                   'Secção': '^Secção (.*)',
-                   'Sub-Secção': '^SUBSecção (.*)',
-                   'Artigo': '^Artigo (.*)$',
-                   'Número': '^(\d+) - .*',
-                   'Alínea': '^(\w+)\) .*',
-                   }
+html_lists = {'Número': 'li', 'Alínea': 'li'}
 
 formal_hierarchy_elements = ['Anexo', 'Artigo', 'Número', 'Alínea']
 

@@ -36,7 +36,7 @@ def parse(text):
 
 def analyse(tokens):
     root = Document()
-    parser = HierarchyParser(root)
+    root_parser = HierarchyParser(root)
 
     def add_text(text):
         if len(paragraph) and isinstance(paragraph[-1], Text):
@@ -56,11 +56,11 @@ def analyse(tokens):
         # end of quote
         elif token.string == '»' and len(paragraph) == 0:
             block_mode = False
-            parser.add(block_parser.root)
+            root_parser.add(block_parser.root)
             paragraph = Element('p')
         # construct the paragraphs
         elif isinstance(token, expressions.Anchor) or token.string == '\n':
-            p = parser
+            p = root_parser
             if block_mode:
                 p = block_parser
             if len(paragraph):
@@ -85,41 +85,41 @@ def analyse(tokens):
 class HierarchyParser():
     def __init__(self, root, add_links=True):
         self.current_element = dict([(format, None) for
-                                     format in constants.hierarchy_html_classes])
+                                     format in constants.html_classes])
         self.previous_element = None
         self.root = root
         self._add_links = add_links
 
     def add(self, paragraph):
-        hierarchy_priority = constants.hierarchy_priority
+        hierarchy_order = constants.hierarchy_order
 
         current_element = self.current_element
         previous_element = self.previous_element
 
-        def add_element(receiving_element, element):
+        def add_element(parent, element):
             """
-            Adds the current element of `format_to_move` to `receiving_element`.
+            Adds the current element of `format_to_move` to `parent`.
 
             If element to add is an element of a list, create a ordered list
             in the receiving element, and add the element to to it.
             """
             # if format_to_move is an item of lists
             if element.tag == 'li':
-                # and receiving_element does not have a list, we create it:
-                if len(receiving_element) == 0 or receiving_element[-1].tag != 'ol':
-                    receiving_element.append(Element('ol'))
+                # and parent does not have a list, we create it:
+                if len(parent) == 0 or parent[-1].tag != 'ol':
+                    parent.append(Element('ol'))
 
-                receiving_element = receiving_element[-1]
+                parent = parent[-1]
 
-            receiving_element.append(element)
+            parent.append(element)
 
         def add_element_to_hierarchy(element, format):
             """
             Adds element of format `format_to_move` to the format above in the
             hierarchy, if any.
             """
-            for index in reversed(range(0, hierarchy_priority.index(format))):
-                format_to_receive = hierarchy_priority[index]
+            for index in reversed(range(0, hierarchy_order.index(format))):
+                format_to_receive = hierarchy_order[index]
 
                 if current_element[format_to_receive] is not None:
                     add_element(current_element[format_to_receive], element)
@@ -147,12 +147,12 @@ class HierarchyParser():
 
         def create_element(element, format):
             # create new tag for `div` or `li`.
-            if format in constants.hierarchy_html_lists:
-                new_element = Element(constants.hierarchy_html_lists[format],
-                                      attrib={'class': constants.hierarchy_html_classes[format]})
+            if format in constants.html_lists:
+                new_element = Element(constants.html_lists[format],
+                                      attrib={'class': constants.html_classes[format]})
             else:
                 new_element = Element('div',
-                                      attrib={'class': constants.hierarchy_html_classes[format]})
+                                      attrib={'class': constants.html_classes[format]})
 
             # and put the element in the newly created tag.
             if format in constants.hierarchy_html_titles:
@@ -168,7 +168,7 @@ class HierarchyParser():
             return new_element
 
         if paragraph.tag == 'blockquote':
-            for format in reversed(hierarchy_priority):
+            for format in reversed(hierarchy_order):
                 if current_element[format] is not None:
                     current_element[format].append(paragraph)
                     break
@@ -176,7 +176,7 @@ class HierarchyParser():
                 self.root.append(paragraph)
             return  # blockquote added, ignore rest of it.
 
-        for format in hierarchy_priority:
+        for format in hierarchy_order:
             if not isinstance(paragraph, constants.hierarchy_classes[format]):
                 continue
 
@@ -189,8 +189,8 @@ class HierarchyParser():
 
             current_element[format] = new_element
             # reset all current_element in lower hierarchy
-            for lower_format in hierarchy_priority[
-                                hierarchy_priority.index(format) + 1:]:
+            for lower_format in hierarchy_order[
+                                hierarchy_order.index(format) + 1:]:
                 current_element[lower_format] = None
             break
         else:  # is just text
@@ -204,7 +204,7 @@ class HierarchyParser():
                 previous_element[0].append(new_element)
             else:
                 # add to last non-None format
-                for format in reversed(hierarchy_priority):
+                for format in reversed(hierarchy_order):
                     if current_element[format] is not None:
                         current_element[format].append(new_element)
                         break
