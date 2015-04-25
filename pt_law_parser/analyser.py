@@ -1,4 +1,3 @@
-import re
 from copy import deepcopy
 
 from .html import Document, Element, Text, Reference, Anchor, Article, Number, Line
@@ -80,7 +79,7 @@ def analyse(tokens):
 class HierarchyParser():
     def __init__(self, root, add_links=True):
         self.current_element = dict([(format, None) for
-                                     format in constants.hierarchy_classes])
+                                     format in constants.hierarchy_html_classes])
         self.previous_element = None
         self.root = root
         self._add_links = add_links
@@ -132,8 +131,8 @@ class HierarchyParser():
                     break
 
             suffix = ''
-            if format_number:
-                suffix = '-' + format_number
+            if anchor.number:
+                suffix = '-' + anchor.number
 
             id = prefix + constants.hierarchy_ids[format] + suffix
 
@@ -144,10 +143,10 @@ class HierarchyParser():
             # create new tag for `div` or `li`.
             if format in constants.hierarchy_html_lists:
                 new_element = Element(constants.hierarchy_html_lists[format],
-                                      attrib={'class': constants.hierarchy_classes[format]})
+                                      attrib={'class': constants.hierarchy_html_classes[format]})
             else:
                 new_element = Element('div',
-                                      attrib={'class': constants.hierarchy_classes[format]})
+                                      attrib={'class': constants.hierarchy_html_classes[format]})
 
             # and put the element in the newly created tag.
             if format in constants.hierarchy_html_titles:
@@ -171,10 +170,9 @@ class HierarchyParser():
                 self.root.append(paragraph)
             return  # blockquote added, ignore rest of it.
         for format in hierarchy_priority:
-            search = re.search(constants.hierarchy_regex[format], paragraph.text)
-            if not search:
+            if format not in constants.hierarchy_classes or \
+                    not isinstance(paragraph, constants.hierarchy_classes[format]):
                 continue
-            format_number = search.group(1).strip()
 
             new_element = create_element(paragraph, format)
 

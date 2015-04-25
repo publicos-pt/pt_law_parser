@@ -35,6 +35,12 @@ class BaseElement(object):
             string += child.text
         return string
 
+    def print_index(self):
+        for child in self._children:
+            if child.tag in ('div', 'li') and 'id' in child.attrib:
+                print(child.attrib['id'])
+            child.print_index()
+
 
 class Document(BaseElement):
 
@@ -105,19 +111,33 @@ class Reference(Element):
 
 
 class Anchor(Element):
-    def __init__(self, tag):
+    """
+    An anchor to some expressions.Anchor. It contains information about what
+    the anchor is pointing to, and knows how to transform itself to html.
+    """
+    def __init__(self, anchor, tag):
+        assert(isinstance(anchor, expressions.Anchor))
         super(Anchor, self).__init__(tag)
+        self._anchor = anchor
         self.anchor_element_index = None
 
     def set_href(self, href):
         self[self.anchor_element_index].attrib['href'] = href
+
+    @property
+    def name(self):
+        return self._anchor.name
+
+    @property
+    def number(self):
+        return self._anchor.number
 
 
 class Article(Anchor):
 
     def __init__(self, anchor):
         assert(isinstance(anchor, expressions.Article))
-        super(Article, self).__init__('a')
+        super(Article, self).__init__(anchor, 'a')
         self.append(Text(anchor.name + ' '))
         number = Element('a')
         number.append(Text(anchor.number))
@@ -129,7 +149,7 @@ class Number(Anchor):
 
     def __init__(self, anchor):
         assert(isinstance(anchor, expressions.Number))
-        super(Number, self).__init__('span')
+        super(Number, self).__init__(anchor, 'span')
         number = Element('a')
         number.append(Text(anchor.as_str()))
         self.append(number)
@@ -141,7 +161,7 @@ class Line(Anchor):
 
     def __init__(self, anchor):
         assert(isinstance(anchor, expressions.Line))
-        super(Line, self).__init__('span')
+        super(Line, self).__init__(anchor, 'span')
         number = Element('a')
         number.append(Text(anchor.as_str()))
         self.append(number)
