@@ -184,9 +184,13 @@ def analyse(tokens):
                 p = block_parser
             if len(paragraph):
                 p.add(paragraph)
-            if isinstance(token, expressions.Anchor):
-                p.add(anchor_mapping[type(token)](token))
+
             paragraph = Element('p')
+            if isinstance(token, expressions.Anchor):
+                anchor_class = anchor_mapping[type(token)]
+                p.add(anchor_class(token))
+                if anchor_class == SpanAnchor:
+                    paragraph = Element('span')
         else:
             if isinstance(token, expressions.Reference):
                 paragraph.append(Reference(token))
