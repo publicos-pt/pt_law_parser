@@ -110,10 +110,15 @@ class Anchor(Token):
     name = None
 
     def __init__(self, string):
-        super(Anchor, self).__init__('%s %s' % (self.name, string))
+        self._number = string
+        super(Anchor, self).__init__('%s %s' % (self.name, self._number))
 
     def as_str(self):
         return '%s\n' % self.string
+
+    @property
+    def number(self):
+        return self._number
 
 
 class ArticleAnchor(Anchor):

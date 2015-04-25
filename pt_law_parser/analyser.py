@@ -106,10 +106,17 @@ class Reference(Element):
 
 class Anchor(Element):
 
-    def __init__(self, reference):
-        assert(isinstance(reference, expressions.Anchor))
-        super(Anchor, self).__init__('a', {'href': '#'})
-        self.append(Text(reference.string))
+    def __init__(self, anchor):
+        assert(isinstance(anchor, expressions.Anchor))
+        super(Anchor, self).__init__('p')
+        self.append(Text(anchor.name + ' '))
+        number = Element('a')
+        number.append(Text(anchor.number))
+        self.append(number)
+
+    def set_id(self, id):
+        self[-1].attrib['id'] = id
+        self[-1].attrib['href'] = '#' + id
 
 
 def parse(text):
@@ -145,7 +152,7 @@ def analyse(tokens):
         # start of quote
         if token.string == '«' and len(paragraph) == 0:
             block_mode = True
-            block_parser = HierarchyParser(Element('blockquote'))
+            block_parser = HierarchyParser(Element('blockquote'), add_links=False)
         # end of quote
         elif token.string == '»' and len(paragraph) == 0:
             block_mode = False
@@ -171,7 +178,7 @@ def analyse(tokens):
 
 
 class HierarchyParser():
-    def __init__(self, root, add_links=False):
+    def __init__(self, root, add_links=True):
         self.current_element = dict([(format, None) for
                                      format in constants.hierarchy_classes])
         self.previous_element = None
@@ -215,7 +222,7 @@ class HierarchyParser():
             else:
                 add_element(self.root, element)
 
-        def add_id(new_element, format, format_number):
+        def add_id(element, format):
             prefix = ''
             for index in reversed(range(constants.formal_hierarchy_elements.index(format))):
                 temp_format = constants.formal_hierarchy_elements[index]
@@ -225,18 +232,9 @@ class HierarchyParser():
 
             suffix = ''
             if format_number:
-                suffix = '-' + slugify(format_number)
+                suffix = '-' + format_number
 
-            new_element['id'] = prefix + constants.hierarchy_ids[format] + suffix
-
-            anchor_tag = root.new_tag('a',
-                                      **{'href': '#%s' % new_element['id']})
-            anchor_tag.insert(0, NavigableString(' ¶'))
-
-            if format in constants.hierarchy_html_titles:
-                new_element.contents[0].contents[0].append(anchor_tag)
-            else:
-                new_element.contents[0].append(anchor_tag)
+            element.set_id(prefix + constants.hierarchy_ids[format] + suffix)
 
         def create_element(element, format):
             # create new tag for `div` or `li`.
@@ -274,7 +272,8 @@ class HierarchyParser():
                 continue
             format_number = search.group(1).strip()
 
-            # todo: use self.add_id here
+            if self._add_links and isinstance(paragraph, Anchor):
+                add_id(paragraph, format)
 
             new_element = create_element(paragraph, format)
 
