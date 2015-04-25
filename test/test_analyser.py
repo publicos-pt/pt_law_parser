@@ -54,13 +54,16 @@ class TestCase(unittest.TestCase):
         # pretty print to facilitate visualization
         html = html.replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
 
+        # useful to store the result
+        #with open('s.html', 'w') as f:
+        #    f.write(html)
+
         with open(file_dir + '%d.html' % publication['dre_id']) as f:
             expected_html = f.read()
 
         self.assertEqual(expected_html, html)
         return result
 
-    @unittest.expectedFailure
     def test_basic(self):
         """
         Test failing due to DocumentObserver catching EU laws.

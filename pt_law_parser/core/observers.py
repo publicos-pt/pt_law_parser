@@ -9,7 +9,7 @@ BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
 BASE_NUMBER_REGEX = '\d'
 BASE_LINE_REGEX = '[\da-z]*\)'
 
-DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d+(?:/[A-Z]*)?$'
+DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/\d{4}(?:/[A-Z]+)?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
 NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_NUMBER_REGEX
 LINE_REGEX = '^%s$' % BASE_LINE_REGEX

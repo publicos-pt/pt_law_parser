@@ -56,15 +56,15 @@ class TestDocuments(GeneralTestCase):
         managers = [ObserverManager({'foo': DocumentRefObserver,
                                      'bar': DocumentRefObserver})]
 
-        string = 'foo 1/1. bar 2/1'
-        expected = [(DocumentReference('1/1', Token('foo')), 2),
-                    (DocumentReference('2/1', Token('bar')), 7)]
+        string = 'foo 1/2000. bar 2/2000'
+        expected = [(DocumentReference('1/2000', Token('foo')), 2),
+                    (DocumentReference('2/2000', Token('bar')), 7)]
 
         self._test(string, managers, expected)
 
-        string = 'foo 1/1 bar 2/1'
-        expected = [(DocumentReference('1/1', Token('foo')), 2),
-                    (DocumentReference('2/1', Token('bar')), 6)]
+        string = 'foo 1/2000 bar 2/2000'
+        expected = [(DocumentReference('1/2000', Token('foo')), 2),
+                    (DocumentReference('2/2000', Token('bar')), 6)]
 
         self._test(string, managers, expected)
 
