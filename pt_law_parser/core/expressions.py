@@ -11,9 +11,6 @@ class Token(object):
     def as_str(self):
         return self.string
 
-    def __str__(self):
-        return self.as_str()
-
     def __eq__(self, other):
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
