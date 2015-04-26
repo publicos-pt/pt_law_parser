@@ -2,7 +2,7 @@ import re
 
 from .expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, EULawReference, \
-    Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection
+    Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor
 
 
 BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
@@ -142,29 +142,69 @@ class LineRefObserver(ArticleRefObserver):
         return False
 
 
-class EULawRefObserver(Observer):
-    def __init__(self, index, token):
-        super(EULawRefObserver, self).__init__(index, token)
+class GenericRuleObserver(Observer):
+    _rules = []
 
-        self._number = None
-        self._index = None
+    def __init__(self, index, token):
+        super(GenericRuleObserver, self).__init__(index, token)
+
+        self._is_valid = [False for _ in range(len(self._rules))]
+
+    def _gather(self, index, token, rule):
+        raise NotImplementedError
+
+    def _rollback(self, index, token):
+        raise NotImplementedError
 
     def observe(self, index, token, caught):
-        if not caught and re.match(EULAW_NUMBER_REGEX, token.as_str()):
-            self._number = token
+        if not self._is_valid[0]:
+            assert(self._rules[0](token.as_str()))
+            self._is_valid[0] = True
+            return
+
+        for rule in range(1, len(self._rules)):
+            if self._is_valid[rule]:
+                continue
+            if self._is_valid[rule - 1] and self._rules[rule](token.as_str()):
+                # if last rule, it is done
+                self._is_valid[rule] = True
+                self._gather(index, token, rule)
+                if rule == len(self._rules) - 1:
+                    self._is_done = True
+                    return
+                break
+            else:
+                self._rollback(index, token)
+                self._is_done = True
+                break
+
+
+class EULawRefObserver(GenericRuleObserver):
+    _rules = [lambda x: x in ('Diretiva', 'Decisão de Execução'),
+              lambda x: x == ' ', lambda x: x == 'nº', lambda x: x == ' ',
+              lambda x: re.match(EULAW_NUMBER_REGEX, x)]
+
+    def __init__(self, index, token):
+        super(EULawRefObserver, self).__init__(index, token)
+        self._index = None
+        self._number = None
+
+    def _gather(self, index, token, rule):
+        if rule == 4:
             self._index = index
-            self._is_done = True
-            return True
-        return False
+            self._number = token.as_str()
+
+    def _rollback(self, index, token):
+        self._index = None
+        self._number = None
 
     def replace_in(self, result):
         if self._number is not None:
-            result[self._index] = EULawReference(self._number.as_str())
+            result[self._index] = EULawReference(self._number, Token(self._string))
 
 
-class AnchorObserver(Observer):
-    anchor_klass = None
-    rules = []
+class AnchorObserver(GenericRuleObserver):
+    anchor_klass = Anchor
     number_at = None
     take_up_to = None
 
@@ -173,33 +213,14 @@ class AnchorObserver(Observer):
         self._number = None
         self._number_index = None
 
-        self._is_valid = [False for _ in range(len(self.rules))]
+    def _gather(self, index, token, rule):
+        if rule == self.number_at:
+            self._number = token.as_str()
+            self._number_index = index
 
-    def observe(self, index, token, caught):
-
-        if not self._is_valid[0]:
-            if token.as_str() == '\n':
-                self._is_valid[0] = True
-            return
-
-        for rule in range(1, len(self.rules)):
-            if self._is_valid[rule]:
-                continue
-            if self._is_valid[rule - 1] and self.rules[rule](token.as_str()):
-                # if last rule, is done
-                if rule == len(self.rules) - 1:
-                    self._is_done = True
-                    return
-                self._is_valid[rule] = True
-                if rule == self.number_at:
-                    self._number = token.as_str()
-                    self._number_index = index
-                break
-            else:
-                self._number = None
-                self._number_index = None
-                self._is_done = True
-                break
+    def _rollback(self, index, token):
+        self._number = None
+        self._number_index = None
 
     def replace_in(self, result):
         if self._number is not None:
@@ -217,44 +238,44 @@ def common_rules(name, regex):
 
 class ArticleObserver(AnchorObserver):
     anchor_klass = Article
-    rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX)
+    _rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX)
     number_at = 3
     take_up_to = 5
 
 
 class SubSectionObserver(ArticleObserver):
     anchor_klass = SubSection
-    rules = common_rules(SubSection.name, '[IVX]*')
+    _rules = common_rules(SubSection.name, '[IVX]*')
 
 
 class SectionObserver(ArticleObserver):
     anchor_klass = Section
-    rules = common_rules(Section.name, '[IVX]*')
+    _rules = common_rules(Section.name, '[IVX]*')
 
 
 class PartObserver(ArticleObserver):
     anchor_klass = Part
-    rules = common_rules(anchor_klass.name, '[IVX]*')
+    _rules = common_rules(anchor_klass.name, '[IVX]*')
 
 
 class ChapterObserver(ArticleObserver):
     anchor_klass = Chapter
-    rules = common_rules(Chapter.name, '[IVX]*')
+    _rules = common_rules(Chapter.name, '[IVX]*')
 
 
 class AnnexObserver(ArticleObserver):
     anchor_klass = Annex
-    rules = common_rules(Annex.name, '[IVX]*')
+    _rules = common_rules(Annex.name, '[IVX]*')
 
 
 class TitleObserver(ArticleObserver):
     anchor_klass = Title
-    rules = common_rules(Title.name, '[IVX]*')
+    _rules = common_rules(Title.name, '[IVX]*')
 
 
 class NumberObserver(AnchorObserver):
     anchor_klass = Number
-    rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
+    _rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
              lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
     number_at = 1
     take_up_to = 4
@@ -262,7 +283,7 @@ class NumberObserver(AnchorObserver):
 
 class LineObserver(AnchorObserver):
     anchor_klass = Line
-    rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
+    _rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
              lambda x: x == ' ']
     number_at = 1
     take_up_to = 2

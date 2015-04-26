@@ -83,9 +83,28 @@ class Reference(Element):
     def __init__(self, reference):
         assert(isinstance(reference, expressions.Reference))
         super(Reference, self).__init__('a', {'href': '#'})
-        self._number = reference.string
-        self._parent = reference.parent
-        self.append(Text(self._number))
+        self._reference = reference
+        self.append(Text(reference.string))
+
+
+def build_eu_url(name, number):
+    # example: '2000/29/CE'
+    year, id, _ = number.split('/')
+    label = {'Diretiva': 'L',
+             'Decisão de Execução': 'D'}[name]
+    # regulation missing, e.g. 31992R2081
+
+    eur_id = '3%s%s%04d' % (year, label, int(id))
+
+    return 'http://eur-lex.europa.eu/legal-content/PT/TXT/?uri=CELEX:%s' % eur_id
+
+
+class EULawReference(Reference):
+
+    def __init__(self, reference):
+        assert(isinstance(reference, expressions.EULawReference))
+        super(EULawReference, self).__init__(reference)
+        self.attrib['href'] = build_eu_url(reference.parent.as_str(), reference.string)
 
 
 class Anchor(Element):

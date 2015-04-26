@@ -59,7 +59,8 @@ def parse(string, managers, terms=set()):
 
 
 common_managers = [
-    ObserverManager({'nº': observers.EULawRefObserver}),
+    ObserverManager({'Diretiva': observers.EULawRefObserver,
+                     'Decisão de Execução': observers.EULawRefObserver}),
     ObserverManager({'\n': observers.AnnexObserver}),
     ObserverManager({'\n': observers.SectionObserver}),
     ObserverManager({'\n': observers.SubSectionObserver}),

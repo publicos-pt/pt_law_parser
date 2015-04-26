@@ -233,14 +233,15 @@ class TestLines(GeneralTestCase):
 class TestEULaw(GeneralTestCase):
 
     def test_single(self):
-        managers = [ObserverManager({'nº': EULawRefObserver})]
+        managers = [ObserverManager({'Diretiva': EULawRefObserver,
+                                     'Decisão de Execução': EULawReference})]
 
-        self._test('nº 2011/778/UE ', managers, [(EULawReference('2011/778/UE'),
-                                                  2)])
-        self._test('nº 2000/29/CE,', managers, [(EULawReference('2000/29/CE'),
-                                                 2)])
-        self._test('nº 2000/778/UE.', managers, [(EULawReference('2000/778/UE'),
-                                                  2)])
+        self._test('Diretiva nº 2011/778/UE ', managers,
+                   [(EULawReference('2011/778/UE', Token('Diretiva')), 4)])
+        self._test('Diretiva nº 2000/29/CE,', managers,
+                   [(EULawReference('2000/29/CE', Token('Diretiva')), 4)])
+        self._test('Diretiva nº 2000/778/UE.', managers,
+                   [(EULawReference('2000/778/UE', Token('Diretiva')), 4)])
 
 
 class TestAnchorArticle(GeneralTestCase):

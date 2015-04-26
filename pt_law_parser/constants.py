@@ -48,3 +48,10 @@ hierarchy_classes = {Annex: html.Annex,
                      Number: html.Number,
                      Line: html.Line,
                      }
+
+references = {DocumentReference: html.Reference,
+              ArticleReference: html.Reference,
+              NumberReference: html.Reference,
+              LineReference: html.Reference,
+              EULawReference: html.EULawReference,
+}

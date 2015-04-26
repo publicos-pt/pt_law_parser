@@ -1,4 +1,4 @@
-from .html import Document, Element, Text, Reference, Anchor
+from .html import Document, Element, Text, Anchor
 
 from pt_law_parser.core import parser, expressions, observers
 from pt_law_parser import constants
@@ -59,7 +59,7 @@ def analyse(tokens):
                     paragraph = Element('span')
         else:
             if isinstance(token, expressions.Reference):
-                paragraph.append(Reference(token))
+                paragraph.append(constants.references[type(token)](token))
             else:
                 add_text(token.string)
 
