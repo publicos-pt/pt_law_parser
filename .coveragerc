@@ -2,3 +2,6 @@
 exclude_lines = 
     def __repr__
     raise NotImplementedError
+
+[run]
+source = pt_law_parser
