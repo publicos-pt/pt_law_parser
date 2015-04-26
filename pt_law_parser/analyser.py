@@ -1,4 +1,4 @@
-from .html import Document, Element, Text, Anchor
+from .html import Document, Element, Text, Anchor, Section, TitledSection
 
 from pt_law_parser.core import parser, expressions, observers
 from pt_law_parser import constants
@@ -122,29 +122,14 @@ class HierarchyParser():
         id = prefix + constants.hierarchy_ids[format] + suffix
 
         element.set_id(id)
-        anchor.set_href('#' + id)
+        anchor.href = '#' + id
 
     @staticmethod
-    def _create_element(element, format):
-        # create new tag for `div` or `li`.
-        attrib = {'class': constants.html_classes[format]}
-        if format in constants.html_lists:
-            new_element = Element(constants.html_lists[format], attrib=attrib)
+    def _create_element(anchor):
+        if anchor.format in constants.hierarchy_html_titles:
+            return TitledSection(anchor)
         else:
-            new_element = Element('div', attrib=attrib)
-
-        # and put the element in the newly created tag.
-        if format in constants.hierarchy_html_titles:
-            # if format is title, create it.
-            current_element_title = Element(constants.hierarchy_html_titles[format],
-                                            attrib={'class': 'title'})
-            current_element_title.append(element)
-
-            new_element.append(current_element_title)
-        else:
-            new_element.append(element)
-
-        return new_element
+            return Section(anchor)
 
     def add_blockquote(self, blockquote):
         assert(blockquote.tag == 'blockquote')
@@ -158,7 +143,7 @@ class HierarchyParser():
     def add_anchor(self, anchor):
         format = anchor.format
 
-        new_element = self._create_element(anchor, format)
+        new_element = self._create_element(anchor)
 
         if self._add_links and format in constants.formal_hierarchy_elements:
             self._add_id(new_element, anchor, format)
@@ -190,3 +175,35 @@ class HierarchyParser():
                 self.root.append(paragraph)
 
         self.previous_element = paragraph
+
+
+def toc(document):
+    assert(isinstance(document, Document))
+
+    index = Element('div')
+
+    def _add_to_index(element, root):
+        if element.find_all(lambda x: isinstance(x, (TitledSection, ))):
+            ul_tag = Element('ul', {'class': 'tree'})
+        else:
+            return None
+
+        for child in element.find_all(lambda x: isinstance(x, TitledSection)):
+            name = child.title
+            anchor = child.anchor
+
+            if anchor.href:
+                tag = Element('a', {'href': anchor.href})
+            else:
+                tag = Element('h5', {'class': 'tree-toggler'})
+            tag.append(Text(name))
+
+            li_tag = Element('li')
+            li_tag.append(tag)
+            _add_to_index(child, li_tag)
+            ul_tag.append(li_tag)
+
+        root.append(ul_tag)
+
+    _add_to_index(document, index)
+    return index

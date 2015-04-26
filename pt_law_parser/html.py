@@ -24,6 +24,13 @@ class BaseElement(object):
             string += child.as_html()
         return string
 
+    def find_all(self, condition):
+        return [child for child in self._children if condition(child)]
+
+    @property
+    def text(self):
+        return ''.join(child.text for child in self._children)
+
 
 class Document(BaseElement):
 
@@ -77,6 +84,10 @@ class Text(Element):
     def as_html(self):
         return self._text
 
+    @property
+    def text(self):
+        return self._text
+
 
 class Reference(Element):
 
@@ -118,7 +129,12 @@ class Anchor(Element):
         self._anchor = anchor
         self.anchor_element_index = None
 
-    def set_href(self, href):
+    @property
+    def href(self):
+        return self[self.anchor_element_index].attrib.get('href', None)
+
+    @href.setter
+    def href(self, href):
         self[self.anchor_element_index].attrib['href'] = href
 
     @property
@@ -130,9 +146,9 @@ class Anchor(Element):
         return self._anchor.__class__
 
 
-class Article(Anchor):
+class ArticleTitle(Anchor):
     def __init__(self, anchor):
-        super(Article, self).__init__(anchor, 'a')
+        super(ArticleTitle, self).__init__(anchor, 'a')
         self.append(Text(anchor.name + ' '))
         number = Element('a')
         number.append(Text(anchor.number))
@@ -140,11 +156,11 @@ class Article(Anchor):
         self.anchor_element_index = 1
 
 
-class Number(Anchor):
+class NumberTitle(Anchor):
 
     def __init__(self, anchor):
         assert(isinstance(anchor, expressions.Number))
-        super(Number, self).__init__(anchor, 'span')
+        super(NumberTitle, self).__init__(anchor, 'span')
         number = Element('a')
         number.append(Text(anchor.as_str()))
         self.append(number)
@@ -152,11 +168,11 @@ class Number(Anchor):
         self.anchor_element_index = 0
 
 
-class Line(Anchor):
+class LineTitle(Anchor):
 
     def __init__(self, anchor):
         assert(isinstance(anchor, expressions.Line))
-        super(Line, self).__init__(anchor, 'span')
+        super(LineTitle, self).__init__(anchor, 'span')
         number = Element('a')
         number.append(Text(anchor.as_str()))
         self.append(number)
@@ -164,9 +180,57 @@ class Line(Anchor):
         self.anchor_element_index = 0
 
 
-class Annex(Article):
+class AnnexTitle(ArticleTitle):
     pass
 
 
-class Section(Article):
+class SectionTitle(ArticleTitle):
     pass
+
+
+class Section(Element):
+    html_lists = {expressions.Number: 'li', expressions.Line: 'li'}
+    html_classes = {
+        expressions.Annex: 'annex',
+        expressions.Part: 'part',
+        expressions.Title: 'title',
+        expressions.Chapter: 'chapter',
+        expressions.Section: 'section',
+        expressions.SubSection: 'sub-section',
+        expressions.Article: 'article',
+        expressions.Number: 'number list-unstyled',
+        expressions.Line: 'line list-unstyled'}
+
+    def _params(self, anchor):
+        tag = 'div'
+        if anchor.format in self.html_lists:
+            tag = self.html_lists[anchor.format]
+
+        return tag, {'class': self.html_classes[anchor.format]}
+
+    def __init__(self, anchor):
+        assert(isinstance(anchor, Anchor))
+        super(Section, self).__init__(*self._params(anchor))
+        self.append(anchor)
+
+
+class TitledSection(Section):
+
+    def __init__(self, anchor):
+        from pt_law_parser import constants
+        super(Section, self).__init__(*self._params(anchor))
+
+        # create title container
+        container = Element(constants.hierarchy_html_titles[anchor.format],
+                            attrib={'class': 'title'})
+        container.append(anchor)
+
+        self.append(container)
+
+    @property
+    def title(self):
+        return ' '.join(c.text for c in self[0]._children)
+
+    @property
+    def anchor(self):
+        return self[0][0]

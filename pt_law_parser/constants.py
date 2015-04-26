@@ -5,16 +5,6 @@ from pt_law_parser import html
 hierarchy_order = [
     Annex, Part, Title, Chapter, Section, SubSection, Article, Number, Line]
 
-html_classes = {Annex: 'annex',
-                Part: 'part',
-                Title: 'title',
-                Chapter: 'chapter',
-                Section: 'section',
-                SubSection: 'sub-section',
-                Article: 'article',
-                Number: 'number list-unstyled',
-                Line: 'line list-unstyled'}
-
 hierarchy_ids = {Annex: 'anexo',
                  Part: 'parte',
                  Title: 'titulo',
@@ -33,20 +23,18 @@ hierarchy_html_titles = {Part: 'h2',
                          Annex: 'h2',
                          Article: 'h5'}
 
-html_lists = {Number: 'li', Line: 'li'}
-
 formal_hierarchy_elements = [Annex, Article, Number, Line]
 
 
-hierarchy_classes = {Annex: html.Annex,
-                     Part: html.Section,
-                     Title: html.Section,
-                     Chapter: html.Section,
-                     Section: html.Section,
-                     SubSection: html.Section,
-                     Article: html.Article,
-                     Number: html.Number,
-                     Line: html.Line,
+hierarchy_classes = {Annex: html.AnnexTitle,
+                     Part: html.SectionTitle,
+                     Title: html.SectionTitle,
+                     Chapter: html.SectionTitle,
+                     Section: html.SectionTitle,
+                     SubSection: html.SectionTitle,
+                     Article: html.ArticleTitle,
+                     Number: html.NumberTitle,
+                     Line: html.LineTitle,
                      }
 
 references = {DocumentReference: html.Reference,

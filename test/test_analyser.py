@@ -4,7 +4,7 @@ import unittest
 from pt_law_downloader import get_publication
 
 from pt_law_parser.normalizer import normalize
-from pt_law_parser.analyser import parse, analyse
+from pt_law_parser.analyser import parse, analyse, toc
 
 
 class TestCase(unittest.TestCase):
@@ -73,3 +73,19 @@ class TestCase(unittest.TestCase):
 
     def test_simple(self):
         self._compare_texts('basic.txt', 'basic.html')
+
+    def test_toc(self):
+        publication = get_publication(640339)
+        result = analyse(parse(normalize(publication['text'])))
+        result = toc(result)
+
+        toc_html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
+                   '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>'\
+                   + result.as_html() + '</html>'
+        toc_html = toc_html.replace('<li', '\n<li')
+
+        file_dir = os.path.dirname(__file__)
+        with open(file_dir + '/expected/%d_toc.html' % 640339) as f:
+            expected_html = f.read()
+
+        self.assertEqual(expected_html, toc_html)
