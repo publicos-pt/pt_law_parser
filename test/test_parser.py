@@ -32,6 +32,12 @@ class TestDocuments(GeneralTestCase):
         self._test('Decreto-Lei nº 2-A/2013,', managers,
                    [(DocumentReference('2-A/2013', Token('Decreto-Lei')), 4)])
 
+    def test_old_notation(self):
+        managers = [ObserverManager({'Decreto-Lei': DocumentRefObserver})]
+
+        self._test('Decreto-Lei nº 2-A/90,', managers,
+                   [(DocumentReference('2-A/90', Token('Decreto-Lei')), 4)])
+
     def test_many(self):
         managers = [ObserverManager({'Decretos-Leis': DocumentRefObserver})]
 
