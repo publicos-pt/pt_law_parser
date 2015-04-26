@@ -106,10 +106,10 @@ class HierarchyParser():
         else:
             self._add_element(self.root, element)
 
-    def _add_id(self, element, anchor, format):
+    def _add_id(self, element, anchor):
         assert(isinstance(anchor, Anchor))
         prefix = ''
-        for index in reversed(range(constants.formal_hierarchy_elements.index(format))):
+        for index in reversed(range(constants.formal_hierarchy_elements.index(anchor.format))):
             temp_format = constants.formal_hierarchy_elements[index]
             if self.current_element[temp_format]:
                 prefix = self.current_element[temp_format].attrib['id'] + '-'
@@ -119,10 +119,9 @@ class HierarchyParser():
         if anchor.number:
             suffix = '-' + anchor.number
 
-        id = prefix + constants.hierarchy_ids[format] + suffix
+        id = prefix + constants.hierarchy_ids[anchor.format] + suffix
 
         element.set_id(id)
-        anchor.href = '#' + id
 
     @staticmethod
     def _create_element(anchor):
@@ -146,7 +145,7 @@ class HierarchyParser():
         new_element = self._create_element(anchor)
 
         if self._add_links and format in constants.formal_hierarchy_elements:
-            self._add_id(new_element, anchor, format)
+            self._add_id(new_element, anchor)
 
         self._add_element_to_hierarchy(new_element, format)
 

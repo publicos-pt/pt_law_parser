@@ -33,9 +33,7 @@ class BaseElement(object):
 
 
 class Document(BaseElement):
-
-    def __init__(self):
-        super(Document, self).__init__()
+    pass
 
 
 class Element(BaseElement):
@@ -65,9 +63,6 @@ class Element(BaseElement):
 
         return '<{0}{1}>{2}</{0}>'.format(self.tag, attributes,
                                           super(Element, self).as_html())
-
-    def set_id(self, id):
-        self.attrib['id'] = id
 
 
 class Text(Element):
@@ -212,6 +207,14 @@ class Section(Element):
         assert(isinstance(anchor, Anchor))
         super(Section, self).__init__(*self._params(anchor))
         self.append(anchor)
+
+    @property
+    def anchor(self):
+        return self[0]
+
+    def set_id(self, id):
+        self.attrib['id'] = id
+        self.anchor.href = '#' + id
 
 
 class TitledSection(Section):
