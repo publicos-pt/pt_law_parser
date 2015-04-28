@@ -3,16 +3,19 @@
 
 # Portuguese law parser
 
-Interprets texts of the portuguese law. It is written in Python, and depends on
-a downloader to retrieve the law.
+This package aims to machine-read the portuguese law officially published in
+[dre](http://dre.pt). Thanks for checking it out.
 
-## What it does:
+## What this package does:
 
-1. Identifies references to other laws;
-2. Identifies references to European laws;
-3. Identifies sections and other topographic features of the text
+Allows to tokenize, parse and analyse the raw text from the official source, which 
+is downloaded by its dependency [pt_law_downloader](https://github.com/publicos-pt/pt_law_downloader).
 
-This is done using a combination of a tokenizer, a parser and an analyser.
+In particular, this package structures the text according to the structure of the
+law, identifies references to other documents and to European law, and other
+perks.
+
+Take a look at the tests to understand how you can use this package. 
 
 ## Install
 
