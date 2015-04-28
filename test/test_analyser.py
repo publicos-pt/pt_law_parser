@@ -7,6 +7,7 @@ from pt_law_parser.normalizer import normalize
 from pt_law_parser.analyser import parse, analyse
 from pt_law_parser.html import html_toc
 from pt_law_parser.json import decode
+from pt_law_parser.core.expressions import DocumentReference
 
 
 class TestCase(unittest.TestCase):
@@ -85,7 +86,11 @@ class TestCase(unittest.TestCase):
         Test failing due to DocumentObserver catching EU laws.
         """
         publication = get_publication(67040491)
-        self._test(publication)
+        result = self._test(publication)
+
+        # test recursive search for references
+        self.assertEqual(23, len(
+            result.find_all(lambda x: isinstance(x, DocumentReference), True)))
 
     def test_simple(self):
         self._compare_texts('basic.txt', 'basic.html')

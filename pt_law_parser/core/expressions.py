@@ -63,7 +63,7 @@ class Reference(Token):
 
     def __repr__(self):
         return '<%s %s %s>' % (self.__class__.__name__,
-                               repr(str(self)), repr(str(self.parent)))
+                               repr(self.number), repr(self.parent))
 
     def as_html(self):
         return self._build_html('a', self.as_str(), {'href': '#'})
@@ -260,7 +260,18 @@ class BaseDocumentSection(BaseElement):
         return {self.__class__.__name__: [child.as_json() for child in
                                           self._children]}
 
-    def find_all(self, condition):
+    def find_all(self, condition, recursive=False):
+        if recursive:
+            def _find_all(root):
+                result = []
+                if isinstance(root, BaseDocumentSection):
+                    for child in root._children:
+                        if condition(child):
+                            result.append(child)
+                        result += _find_all(child)
+                return result
+            return _find_all(self)
+
         return [child for child in self._children if condition(child)]
 
     def id_tree(self):
