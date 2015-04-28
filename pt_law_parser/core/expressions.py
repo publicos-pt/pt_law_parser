@@ -14,15 +14,17 @@ class BaseElement():
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
+            return self.as_json() == other.as_json()
         else:
             raise NotImplementedError
 
-    def __hash__(self):
-        return hash(tuple(self.__dict__.values()))
-
     @staticmethod
     def _build_html(tag, text, attrib):
+        text = text.replace('\n', '')  # \n have no meaning in HTML
+        if not text:
+            # ignore empty elements
+            return ''
+
         attributes = ' '.join('%s="%s"' % (key, value)
                               for (key, value) in sorted(attrib.items())
                               if value is not None)
@@ -67,7 +69,10 @@ class Reference(Token):
         return self._build_html('a', self.as_str(), {'href': '#'})
 
     def as_json(self):
-        return {self.__class__.__name__: [self.number, self.parent]}
+        parent_json = None
+        if self.parent:
+            parent_json = self.parent.as_json()
+        return {self.__class__.__name__: [self.number, parent_json]}
 
     @property
     def number(self):
@@ -81,7 +86,7 @@ class Reference(Token):
 class DocumentReference(Reference):
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, repr(str(self)))
+        return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
 
 
 class LineReference(Reference):
@@ -118,9 +123,6 @@ class EULawReference(Reference):
         return self._build_html('a', self.as_str(),
                                 {'href': self._build_eu_url(self.parent.as_str(),
                                                             self.number)})
-
-    def as_json(self):
-        return {self.__class__.__name__: [self.number, self.parent]}
 
 
 class Anchor(Token):
@@ -213,10 +215,8 @@ class Line(Number):
 
 class BaseDocumentSection(BaseElement):
 
-    def __init__(self, children=None):
+    def __init__(self, *children):
         self._children = []
-        if children is None:
-            children = []
         for child in children:
             self.append(child)
         self._parent_section = None
@@ -300,9 +300,9 @@ class DocumentSection(BaseDocumentSection):
         Number: 'number list-unstyled',
         Line: 'line list-unstyled'}
 
-    def __init__(self, children):
+    def __init__(self, *children):
         assert(isinstance(children[0], Anchor))
-        super(DocumentSection, self).__init__(children)
+        super(DocumentSection, self).__init__(*children)
         self.anchor.reference = self
 
     @property
@@ -377,3 +377,6 @@ class QuotationSection(BaseDocumentSection):
     def as_html(self):
         return '<blockquote>%s</blockquote>' % \
                super(QuotationSection, self).as_html()
+
+    def as_str(self):
+        return '«%s»' % super(QuotationSection, self).as_str()

@@ -1,7 +1,6 @@
 from pt_law_parser.core.expressions import Annex, Part, Title, Chapter, Section, \
     SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, \
-    Document, InlineParagraph, InlineDocumentSection, Reference, \
-    TitledDocumentSection
+    Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection
 from pt_law_parser.core import parser, observers
 
 hierarchy_order = [
@@ -30,7 +29,9 @@ def analyse(tokens):
 
     paragraph = Paragraph()
     block_mode = False
-    for index, token in enumerate(tokens):
+    for token in tokens:
+        if token.string == '':
+            continue
         # start of quote
         if token.string == '«' and len(paragraph) == 0:
             block_mode = True
@@ -42,6 +43,8 @@ def analyse(tokens):
             paragraph = Paragraph()
         # construct the paragraphs
         elif isinstance(token, Anchor) or token.string == '\n':
+            if token.string == '\n':
+                paragraph.append(token)
             p = root_parser
             if block_mode:
                 p = block_parser
@@ -83,9 +86,9 @@ class HierarchyParser():
     @staticmethod
     def _create_section(anchor):
         if anchor.format in TitledDocumentSection.hierarchy_html_titles:
-            return TitledDocumentSection([anchor])
+            return TitledDocumentSection(anchor)
         elif anchor.format in InlineDocumentSection.html_lists:
-            return InlineDocumentSection([anchor])
+            return InlineDocumentSection(anchor)
 
     def add(self, element):
         for format in reversed(hierarchy_order):

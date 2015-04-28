@@ -249,6 +249,8 @@ class TestEULaw(GeneralTestCase):
         self._test('Diretiva nº 2000/778/UE.', managers,
                    [(EULawReference('2000/778/UE', Token('Diretiva')), 4)])
 
+        self._test('Diretiva False.', managers, ())
+
 
 class TestAnchorArticle(GeneralTestCase):
 

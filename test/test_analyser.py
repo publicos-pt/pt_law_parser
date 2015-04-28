@@ -6,22 +6,33 @@ from pt_law_downloader import get_publication
 from pt_law_parser.normalizer import normalize
 from pt_law_parser.analyser import parse, analyse
 from pt_law_parser.html import html_toc
+from pt_law_parser.json import decode
 
 
 class TestCase(unittest.TestCase):
 
-    def _compare_texts(self, input_file, expected_file):
+    def _test_json(self, input_file):
         file_dir = os.path.dirname(__file__)
-
         with open(file_dir + '/raw/%s' % input_file) as f:
             text = f.read()
 
         result = analyse(parse(text))
 
+        self.assertEqual(result, decode(result.as_json()))
+
+    def _compare_texts(self, input_file, expected_file):
+        file_dir = os.path.dirname(__file__)
+
+        with open(file_dir + '/raw/%s' % input_file) as f:
+            normalized = f.read()
+
+        result = analyse(parse(normalized))
+
         html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
                '<head><meta http-equiv="Content-Type" content="text/html; ' \
                'charset=utf-8"></head>' + result.as_html() + '</html>'
-        html = html.replace('\n','').replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
+        html = html.replace('\n', '').replace('<div', '\n<div')\
+            .replace('<p', '\n<p').replace('<span', '\n<span')
 
         # useful to store the result
         #with open('s.html', 'w') as f:
@@ -31,6 +42,8 @@ class TestCase(unittest.TestCase):
             expected_html = f.read()
 
         self.assertEqual(expected_html, html)
+        self.assertEqual(normalized, result.as_str())
+        self.assertEqual(result, decode(result.as_json()))
         return result
 
     def _test(self, publication):
@@ -63,6 +76,8 @@ class TestCase(unittest.TestCase):
             expected_html = f.read()
 
         self.assertEqual(expected_html, html)
+        self.assertEqual(normalized, result.as_str())
+        self.assertEqual(result, decode(result.as_json()))
         return result
 
     def test_basic(self):
@@ -70,10 +85,13 @@ class TestCase(unittest.TestCase):
         Test failing due to DocumentObserver catching EU laws.
         """
         publication = get_publication(67040491)
-        result = self._test(publication)
+        self._test(publication)
 
     def test_simple(self):
         self._compare_texts('basic.txt', 'basic.html')
+
+    def test_json(self):
+        self._test_json('basic.txt')
 
 
 class TestToc(unittest.TestCase):

@@ -136,8 +136,9 @@ class LineRefObserver(ArticleRefObserver):
             self._parent = index
         elif re.match(ARTICLE_NUMBER_REGEX, token.as_str()):
             self._parent = index
-        elif re.match(DOCUMENT_NUMBER_REGEX, token.as_str()):
-            self._parent = index
+        # never found such case
+        # elif re.match(DOCUMENT_NUMBER_REGEX, token.as_str()):
+        #    self._parent = index
 
         return False
 
