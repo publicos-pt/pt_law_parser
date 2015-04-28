@@ -4,7 +4,8 @@ import unittest
 from pt_law_downloader import get_publication
 
 from pt_law_parser.normalizer import normalize
-from pt_law_parser.analyser import parse, analyse, toc
+from pt_law_parser.analyser import parse, analyse
+from pt_law_parser.html import html_toc
 
 
 class TestCase(unittest.TestCase):
@@ -20,7 +21,7 @@ class TestCase(unittest.TestCase):
         html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
                '<head><meta http-equiv="Content-Type" content="text/html; ' \
                'charset=utf-8"></head>' + result.as_html() + '</html>'
-        html = html.replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
+        html = html.replace('\n','').replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
 
         # useful to store the result
         #with open('s.html', 'w') as f:
@@ -52,7 +53,7 @@ class TestCase(unittest.TestCase):
                'charset=utf-8"></head>' + result.as_html() + '</html>'
 
         # pretty print to facilitate visualization
-        html = html.replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
+        html = html.replace('\n','').replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
 
         # useful to store the result
         #with open('s.html', 'w') as f:
@@ -74,18 +75,31 @@ class TestCase(unittest.TestCase):
     def test_simple(self):
         self._compare_texts('basic.txt', 'basic.html')
 
-    def test_toc(self):
-        publication = get_publication(640339)
-        result = analyse(parse(normalize(publication['text'])))
-        result = toc(result)
 
-        toc_html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
+class TestToc(unittest.TestCase):
+
+    def _test(self, publication_id):
+        publication = get_publication(publication_id)
+        result = analyse(parse(normalize(publication['text'])))
+        toc = html_toc(result)
+
+        toc = '<html xmlns="http://www.w3.org/1999/xhtml">'\
                    '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>'\
-                   + result.as_html() + '</html>'
-        toc_html = toc_html.replace('<li', '\n<li')
+                   + toc.as_html() + '</html>'
+        toc = toc.replace('\n', '').replace('<li', '\n<li').replace('<ul', '\n<ul')
+
+        # useful to store the result
+        #with open('s.html', 'w') as f:
+        #    f.write(toc)
 
         file_dir = os.path.dirname(__file__)
-        with open(file_dir + '/expected/%d_toc.html' % 640339) as f:
+        with open(file_dir + '/expected/%d_toc.html' % publication_id) as f:
             expected_html = f.read()
 
-        self.assertEqual(expected_html, toc_html)
+        self.assertEqual(expected_html, toc)
+
+    def test_640339(self):
+        self._test(640339)
+
+    def test_67040491(self):
+        self._test(67040491)
