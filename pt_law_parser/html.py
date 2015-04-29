@@ -74,3 +74,12 @@ def html_toc(document):
 
     _add_to_index(document, index)
     return index
+
+
+def valid_html(html):
+        html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
+               '<head><meta http-equiv="Content-Type" content="text/html; ' \
+               'charset=utf-8"></head>' + html + '</html>'
+        html = html.replace('\n', '').replace('<div', '\n<div')\
+            .replace('<p', '\n<p').replace('<span', '\n<span')
+        return html

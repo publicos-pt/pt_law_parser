@@ -1,7 +1,7 @@
 from pt_law_parser.core import expressions
 
 
-def decode(data):
+def from_json(data):
 
     def _decode(data_dict):
         values = []
