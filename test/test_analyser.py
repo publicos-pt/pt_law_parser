@@ -9,9 +9,7 @@ from pt_law_parser.html import html_toc
 from pt_law_parser.json import decode
 
 
-class TestCase(unittest.TestCase):
-
-    def _pretty_html(self, html):
+def _pretty_html(html):
         html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
                '<head><meta http-equiv="Content-Type" content="text/html; ' \
                'charset=utf-8"></head>' + html + '</html>'
@@ -19,11 +17,15 @@ class TestCase(unittest.TestCase):
             .replace('<p', '\n<p').replace('<span', '\n<span')
         return html
 
-    def _expected(self, file):
-        file_dir = os.path.dirname(__file__)
-        with open(file_dir + '/expected/%s' % file) as f:
-            expected_html = f.read()
-        return expected_html
+
+def _expected(file):
+    file_dir = os.path.dirname(__file__)
+    with open(file_dir + '/expected/%s' % file) as f:
+        expected_html = f.read()
+    return expected_html
+
+
+class TestCase(unittest.TestCase):
 
     def _test_json(self, input_file):
         file_dir = os.path.dirname(__file__)
@@ -46,8 +48,8 @@ class TestCase(unittest.TestCase):
         #with open('s.html', 'w') as f:
         #    f.write(html)
 
-        self.assertEqual(self._expected(expected_file),
-                         self._pretty_html(result.as_html()))
+        self.assertEqual(_expected(expected_file),
+                         _pretty_html(result.as_html()))
         self.assertEqual(normalized, result.as_str())
         self.assertEqual(result, decode(result.as_json()))
         return result
@@ -71,8 +73,8 @@ class TestCase(unittest.TestCase):
         #with open('s.html', 'w') as f:
         #    f.write(html)
 
-        self.assertEqual(self._expected('%d.html' % publication['dre_id']),
-                         self._pretty_html(result.as_html()))
+        self.assertEqual(_expected('%d.html' % publication['dre_id']),
+                         _pretty_html(result.as_html()))
         self.assertEqual(normalized, result.as_str())
         self.assertEqual(result, decode(result.as_json()))
         return result
@@ -93,8 +95,8 @@ class TestCase(unittest.TestCase):
         mapping = {('Decreto-Lei', '2/2002'): 'http://example.com'}
         result.set_doc_refs(mapping)
 
-        self.assertEqual(self._expected('basic_w_refs.html'),
-                         self._pretty_html(result.as_html()))
+        self.assertEqual(_expected('basic_w_refs.html'),
+                         _pretty_html(result.as_html()))
         # assert that json stores urls of doc refs
         self.assertEqual(result, decode(result.as_json()))
 
@@ -109,20 +111,14 @@ class TestToc(unittest.TestCase):
         result = analyse(parse(normalize(publication['text'])))
         toc = html_toc(result)
 
-        toc = '<html xmlns="http://www.w3.org/1999/xhtml">'\
-                   '<head><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head>'\
-                   + toc.as_html() + '</html>'
-        toc = toc.replace('\n', '').replace('<li', '\n<li').replace('<ul', '\n<ul')
+        toc = _pretty_html(toc.as_html())
+        toc = toc.replace('<li', '\n<li').replace('<ul', '\n<ul')
 
         # useful to store the result
-        #with open('s.html', 'w') as f:
+        #with open('toc.html', 'w') as f:
         #    f.write(toc)
 
-        file_dir = os.path.dirname(__file__)
-        with open(file_dir + '/expected/%d_toc.html' % publication_id) as f:
-            expected_html = f.read()
-
-        self.assertEqual(expected_html, toc)
+        self.assertEqual(_expected('%d_toc.html' % publication_id), toc)
 
     def test_640339(self):
         self._test(640339)
