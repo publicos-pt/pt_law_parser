@@ -66,7 +66,7 @@ class Reference(Token):
                                repr(self.number), repr(self.parent))
 
     def as_html(self):
-        return self._build_html('a', self.as_str(), {'href': '#'})
+        return self._build_html('a', self.as_str(), {})
 
     def as_json(self):
         r = {self.__class__.__name__: [self.number]}
