@@ -7,10 +7,23 @@ from pt_law_parser.normalizer import normalize
 from pt_law_parser.analyser import parse, analyse
 from pt_law_parser.html import html_toc
 from pt_law_parser.json import decode
-from pt_law_parser.core.expressions import DocumentReference
 
 
 class TestCase(unittest.TestCase):
+
+    def _pretty_html(self, html):
+        html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
+               '<head><meta http-equiv="Content-Type" content="text/html; ' \
+               'charset=utf-8"></head>' + html + '</html>'
+        html = html.replace('\n', '').replace('<div', '\n<div')\
+            .replace('<p', '\n<p').replace('<span', '\n<span')
+        return html
+
+    def _expected(self, file):
+        file_dir = os.path.dirname(__file__)
+        with open(file_dir + '/expected/%s' % file) as f:
+            expected_html = f.read()
+        return expected_html
 
     def _test_json(self, input_file):
         file_dir = os.path.dirname(__file__)
@@ -29,20 +42,12 @@ class TestCase(unittest.TestCase):
 
         result = analyse(parse(normalized))
 
-        html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
-               '<head><meta http-equiv="Content-Type" content="text/html; ' \
-               'charset=utf-8"></head>' + result.as_html() + '</html>'
-        html = html.replace('\n', '').replace('<div', '\n<div')\
-            .replace('<p', '\n<p').replace('<span', '\n<span')
-
         # useful to store the result
         #with open('s.html', 'w') as f:
         #    f.write(html)
 
-        with open(file_dir + '/expected/%s' % expected_file) as f:
-            expected_html = f.read()
-
-        self.assertEqual(expected_html, html)
+        self.assertEqual(self._expected(expected_file),
+                         self._pretty_html(result.as_html()))
         self.assertEqual(normalized, result.as_str())
         self.assertEqual(result, decode(result.as_json()))
         return result
@@ -62,26 +67,17 @@ class TestCase(unittest.TestCase):
 
         result = analyse(parse(normalized))
 
-        html = '<html xmlns="http://www.w3.org/1999/xhtml">'\
-               '<head><meta http-equiv="Content-Type" content="text/html; ' \
-               'charset=utf-8"></head>' + result.as_html() + '</html>'
-
-        # pretty print to facilitate visualization
-        html = html.replace('\n','').replace('<div', '\n<div').replace('<p', '\n<p').replace('<span', '\n<span')
-
         # useful to store the result
         #with open('s.html', 'w') as f:
         #    f.write(html)
 
-        with open(file_dir + '%d.html' % publication['dre_id']) as f:
-            expected_html = f.read()
-
-        self.assertEqual(expected_html, html)
+        self.assertEqual(self._expected('%d.html' % publication['dre_id']),
+                         self._pretty_html(result.as_html()))
         self.assertEqual(normalized, result.as_str())
         self.assertEqual(result, decode(result.as_json()))
         return result
 
-    def test_basic(self):
+    def test_simple(self):
         """
         Test failing due to DocumentObserver catching EU laws.
         """
@@ -89,11 +85,18 @@ class TestCase(unittest.TestCase):
         result = self._test(publication)
 
         # test recursive search for references
-        self.assertEqual(23, len(
-            result.find_all(lambda x: isinstance(x, DocumentReference), True)))
+        self.assertEqual(23, len(list(result.get_doc_refs())))
 
-    def test_simple(self):
-        self._compare_texts('basic.txt', 'basic.html')
+    def test_basic(self):
+        result = self._compare_texts('basic.txt', 'basic.html')
+
+        mapping = {('Decreto-Lei', '2/2002'): 'http://example.com'}
+        result.set_doc_refs(mapping)
+
+        self.assertEqual(self._expected('basic_w_refs.html'),
+                         self._pretty_html(result.as_html()))
+        # assert that json stores urls of doc refs
+        self.assertEqual(result, decode(result.as_json()))
 
     def test_json(self):
         self._test_json('basic.txt')

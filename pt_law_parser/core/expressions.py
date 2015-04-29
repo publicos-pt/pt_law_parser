@@ -85,12 +85,16 @@ class Reference(Token):
 
 class DocumentReference(Reference):
 
-    def __init__(self, number, parent=None, href=''):
+    def __init__(self, number, parent, href=''):
         super(DocumentReference, self).__init__(number, parent)
         self._href = href
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
+
+    @property
+    def name(self):
+        return self.parent.as_str()
 
     def set_href(self, href):
         self._href = href
@@ -298,6 +302,24 @@ class BaseDocumentSection(BaseElement):
             tree = self._parent_section.id_tree()
         tree += [self]
         return tree
+
+    def get_doc_refs(self):
+        """
+        Yields tuples (name, number) of all its `DocumentReference`s.
+        """
+        refs = self.find_all(lambda x: isinstance(x, DocumentReference), True)
+        for ref in refs:
+            yield ref.name, ref.number
+
+    def set_doc_refs(self, mapping):
+        """
+        Uses a dictionary of the form `(name, ref)-> url` to set the href
+        of its own `DocumentReference`s.
+        """
+        refs = self.find_all(lambda x: isinstance(x, DocumentReference), True)
+        for ref in refs:
+            if (ref.name, ref.number) in mapping:
+                ref.set_href(mapping[(ref.name, ref.number)])
 
 
 class Paragraph(BaseDocumentSection):
