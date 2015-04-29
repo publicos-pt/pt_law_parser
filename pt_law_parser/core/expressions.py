@@ -308,8 +308,10 @@ class BaseDocumentSection(BaseElement):
         Yields tuples (name, number) of all its `DocumentReference`s.
         """
         refs = self.find_all(lambda x: isinstance(x, DocumentReference), True)
+        ref_set = set()
         for ref in refs:
-            yield ref.name, ref.number
+            ref_set.add((ref.name, ref.number))
+        return ref_set
 
     def set_doc_refs(self, mapping):
         """

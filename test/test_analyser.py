@@ -77,8 +77,8 @@ class TestCase(unittest.TestCase):
         publication = get_publication(67040491)
         result = self._test(publication)
 
-        # test recursive search for references
-        self.assertEqual(23, len(list(result.get_doc_refs())))
+        # test recursive search for references: 15 unique references
+        self.assertEqual(15, len(result.get_doc_refs()))
 
     def test_basic(self):
         result = self._compare_texts('basic.txt', 'basic.html')
