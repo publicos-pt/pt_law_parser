@@ -69,10 +69,10 @@ class Reference(Token):
         return self._build_html('a', self.as_str(), {'href': '#'})
 
     def as_json(self):
-        parent_json = None
+        r = {self.__class__.__name__: [self.number]}
         if self.parent:
-            parent_json = self.parent.as_json()
-        return {self.__class__.__name__: [self.number, parent_json]}
+            r[self.__class__.__name__].append(self.parent.as_json())
+        return r
 
     @property
     def number(self):
@@ -85,8 +85,26 @@ class Reference(Token):
 
 class DocumentReference(Reference):
 
+    def __init__(self, number, parent=None, href=''):
+        super(DocumentReference, self).__init__(number, parent)
+        self._href = href
+
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
+
+    def set_href(self, href):
+        self._href = href
+
+    def as_html(self):
+        if self._href:
+            return self._build_html('a', self.as_str(), {'href': self._href})
+        return super(DocumentReference, self).as_html()
+
+    def as_json(self):
+        r = super(DocumentReference, self).as_json()
+        if self._href:
+            r[self.__class__.__name__].append(self._href)
+        return r
 
 
 class LineReference(Reference):
