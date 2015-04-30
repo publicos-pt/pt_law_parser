@@ -1,11 +1,11 @@
 import unittest
 
 from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, Article, Number, Line, EULawReference
+    NumberReference, LineReference, Article, Number, Line, EULawReference, Annex
 from pt_law_parser.core import parser
 from pt_law_parser.core.parser import ObserverManager
 from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver, \
-    LineRefObserver, ArticleRefObserver, EULawRefObserver
+    LineRefObserver, ArticleRefObserver, EULawRefObserver, UnnumberedAnnexObserver
 from pt_law_parser.normalizer import replace_eu_links
 
 
@@ -277,6 +277,21 @@ class TestAnchorLine(GeneralTestCase):
 
         line = Line('a)')
         self._test('\na) test\n', managers, [(line, 1)])
+
+
+class TestAnnex(GeneralTestCase):
+    def test_simple(self):
+        # document 455149 contains this example
+        managers = parser.common_managers
+        result = parser.parse('\nAnexo\n', managers, {'\n'})
+
+        self.assertEqual([Token('\n'), Annex(''), Token('')], result)
+
+    def test_fails(self):
+        managers = [ObserverManager({'\n': UnnumberedAnnexObserver})]
+        result = parser.parse('\nTítulo\n', managers, {'\n'})
+
+        self.assertEqual([Token('\n'), Token('Título'), Token('\n')], result)
 
 
 class TestNormalizer(unittest.TestCase):

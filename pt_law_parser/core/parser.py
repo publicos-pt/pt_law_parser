@@ -27,13 +27,15 @@ class ObserverManager(object):
     def replace_in(self, result):
         for i, observer in self._items():
             if observer.is_done:
-                observer.replace_in(result)
+                if observer.needs_replace:
+                    observer.replace_in(result)
                 del self._observers[i]
 
     def finish(self, result):
         for i, observer in self._items():
             observer.finish()
-            observer.replace_in(result)
+            if observer.needs_replace:
+                observer.replace_in(result)
             del self._observers[i]
 
 
@@ -62,6 +64,7 @@ common_managers = [
     ObserverManager({'Diretiva': observers.EULawRefObserver,
                      'Decisão de Execução': observers.EULawRefObserver}),
     ObserverManager({'\n': observers.AnnexObserver}),
+    ObserverManager({'\n': observers.UnnumberedAnnexObserver}),
     ObserverManager({'\n': observers.SectionObserver}),
     ObserverManager({'\n': observers.SubSectionObserver}),
     ObserverManager({'\n': observers.PartObserver}),

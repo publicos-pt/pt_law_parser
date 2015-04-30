@@ -30,7 +30,7 @@ def analyse(tokens):
     paragraph = Paragraph()
     block_mode = False
     for token in tokens:
-        if token.string == '':
+        if token.as_str() == '':
             continue
         # start of quote
         if token.string == '«' and len(paragraph) == 0:

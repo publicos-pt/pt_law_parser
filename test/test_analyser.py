@@ -70,6 +70,13 @@ class TestCase(unittest.TestCase):
         self.assertEqual(result, from_json(result.as_json()))
         return result
 
+    def test_annex(self):
+        """
+        Tests document with an annex without number.
+        """
+        publication = get_publication(455149)
+        self._test(publication)
+
     def test_simple(self):
         """
         Test failing due to DocumentObserver catching EU laws.

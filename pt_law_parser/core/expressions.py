@@ -16,7 +16,7 @@ class BaseElement():
         if isinstance(other, self.__class__):
             return self.as_json() == other.as_json()
         else:
-            raise NotImplementedError
+            return False
 
     @staticmethod
     def _build_html(tag, text, attrib):
@@ -90,7 +90,8 @@ class DocumentReference(Reference):
         self._href = href
 
     def __repr__(self):
-        return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
+        return '<%s %s %s>' % (self.__class__.__name__, repr(self.as_str()),
+                               repr(self.parent.as_str()))
 
     @property
     def name(self):
@@ -206,6 +207,12 @@ class Title(Anchor):
 
 class Annex(Anchor):
     name = 'Anexo'
+
+    def as_str(self):
+        if self.number:
+            return '%s %s\n' % (self.name, self.number)
+        else:
+            return '%s\n' % self.name
 
 
 class Article(Anchor):

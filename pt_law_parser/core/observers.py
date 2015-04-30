@@ -18,37 +18,76 @@ EULAW_NUMBER_REGEX = '^\d{4}/\d+/(?:CE|UE)$'
 
 class Observer(object):
     """
-    A Token that is able to gather information to change its own state.
+    An object that observes the tokenization and change its own state accordingly.
 
-    It contains an `index` that identifies its position in the list it belongs.
-    Uses `replace_in` to replace itself by its own `_real_class`, thus
-    terminating its observation and itself.
+    Contains an `index` that identifies its position in the list of tokens.
+    Uses `is_done` to indicate that its observation is completed and
+    `needs_replace` to indicate whether it requires replacing itself in the list
+     of tokens using `replace_in`.
     """
     def __init__(self, index, token):
         self._string = token.as_str()
         self._is_done = False
+        self._needs_replace = False
         self._index = index
 
     @property
     def is_done(self):
         return self._is_done
 
+    @property
+    def needs_replace(self):
+        return self._needs_replace
+
+    def _failed(self):
+        self._is_done = True
+        self._needs_replace = False
+
     def observe(self, index, token, caught):
         raise NotImplementedError
 
-    def replace_in(self, result):
+    def _replace_in(self, result):
         raise NotImplementedError
+
+    def replace_in(self, result):
+        assert self._needs_replace
+        self._replace_in(result)
+
+    def finish(self):
+        if not self._is_done:
+            self._failed()
+
+
+class RefObserver(Observer):
+    klass = DocumentReference
+
+    def __init__(self, index, token):
+        super(RefObserver, self).__init__(index, token)
+        self._numbers = {}
+        self._parent = None
+
+    def _replace_in(self, result):
+        parent = None
+        if self._parent is not None:
+            parent = result[self._parent]
+        for i in self._numbers:
+
+            result[i] = self.klass(self._numbers[i].as_str(), parent)
 
     def finish(self):
         self._is_done = True
+        if self._numbers:
+            self._needs_replace = True
+        else:
+            self._failed()
 
 
-class DocumentRefObserver(Observer):
+class DocumentRefObserver(RefObserver):
+    klass = DocumentReference
 
     def __init__(self, index, token):
         super(DocumentRefObserver, self).__init__(index, token)
-
-        self._numbers = {}
+        self._parent = index
 
     def observe(self, index, token, caught):
         if not caught and re.match(DOCUMENT_NUMBER_REGEX, token.as_str()):
@@ -56,28 +95,22 @@ class DocumentRefObserver(Observer):
             return True
 
         if token in (Token('.'), Token('\n')):
-            self._is_done = True
+            self.finish()
 
         return False
 
-    def replace_in(self, result):
-        type_token = Token(self._string)
 
-        for i in self._numbers:
-            result[i] = DocumentReference(self._numbers[i].as_str(), type_token)
-
-
-class ArticleRefObserver(Observer):
+class ArticleRefObserver(RefObserver):
     klass = ArticleReference
 
     def __init__(self, index, token):
         super(ArticleRefObserver, self).__init__(index, token)
-        self._numbers = {}
         self._parent = None
 
     def observe(self, index, token, caught):
         if token in (Token('.'), Token('\n')):
-            self._is_done = True
+            self.finish()
+            return False
 
         if self._parent:
             return False
@@ -90,20 +123,14 @@ class ArticleRefObserver(Observer):
 
         return False
 
-    def replace_in(self, result):
-        parent = None
-        if self._parent:
-            parent = result[self._parent]
-        for i in self._numbers:
-            result[i] = self.klass(self._numbers[i].as_str(), parent)
-
 
 class NumberRefObserver(ArticleRefObserver):
     klass = NumberReference
 
     def observe(self, index, token, caught):
         if token in (Token('.'), Token('\n')):
-            self._is_done = True
+            self.finish()
+            return False
 
         if self._parent:
             return False
@@ -124,7 +151,8 @@ class LineRefObserver(ArticleRefObserver):
 
     def observe(self, index, token, caught):
         if token in (Token('.'), Token('\n')):
-            self._is_done = True
+            self.finish()
+            return False
 
         if self._parent:
             return False
@@ -152,10 +180,7 @@ class GenericRuleObserver(Observer):
         self._is_valid = [False for _ in range(len(self._rules))]
 
     def _gather(self, index, token, rule):
-        raise NotImplementedError
-
-    def _rollback(self, index, token):
-        raise NotImplementedError
+        pass
 
     def observe(self, index, token, caught):
         if not self._is_valid[0]:
@@ -172,11 +197,11 @@ class GenericRuleObserver(Observer):
                 self._gather(index, token, rule)
                 if rule == len(self._rules) - 1:
                     self._is_done = True
+                    self._needs_replace = True
                     return
                 break
             else:
-                self._rollback(index, token)
-                self._is_done = True
+                self._failed()
                 break
 
 
@@ -195,13 +220,8 @@ class EULawRefObserver(GenericRuleObserver):
             self._index = index
             self._number = token.as_str()
 
-    def _rollback(self, index, token):
-        self._index = None
-        self._number = None
-
-    def replace_in(self, result):
-        if self._number is not None:
-            result[self._index] = EULawReference(self._number, Token(self._string))
+    def _replace_in(self, result):
+        result[self._index] = EULawReference(self._number, Token(self._string))
 
 
 class AnchorObserver(GenericRuleObserver):
@@ -219,16 +239,11 @@ class AnchorObserver(GenericRuleObserver):
             self._number = token.as_str()
             self._number_index = index
 
-    def _rollback(self, index, token):
-        self._number = None
-        self._number_index = None
-
     def replace_in(self, result):
-        if self._number is not None:
-            assert(self._number_index == self._index + self.number_at)
-            for i in reversed(range(2, self.take_up_to)):
-                result[self._index + i] = Token('')  # '\n'
-            result[self._index + 1] = self.anchor_klass(self._number)
+        assert(self._number_index == self._index + self.number_at)
+        for i in reversed(range(2, self.take_up_to)):
+            result[self._index + i] = Token('')  # '\n'
+        result[self._index + 1] = self.anchor_klass(self._number)
 
 
 def common_rules(name, regex):
@@ -269,6 +284,14 @@ class AnnexObserver(ArticleObserver):
     _rules = common_rules(Annex.name, '[IVX]*')
 
 
+class UnnumberedAnnexObserver(GenericRuleObserver):
+    _rules = [lambda x: x == '\n', lambda x: x == Annex.name, lambda x: x == '\n']
+
+    def replace_in(self, result):
+        result[self._index + 2] = Token('')
+        result[self._index + 1] = Annex('')
+
+
 class TitleObserver(ArticleObserver):
     anchor_klass = Title
     _rules = common_rules(Title.name, '[IVX]*')
@@ -285,6 +308,6 @@ class NumberObserver(AnchorObserver):
 class LineObserver(AnchorObserver):
     anchor_klass = Line
     _rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
-             lambda x: x == ' ']
+              lambda x: x == ' ']
     number_at = 1
     take_up_to = 2
