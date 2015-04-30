@@ -1,3 +1,8 @@
+"""
+Contains the `parse` function and auxiliary classes. With the help of observers,
+`parse` transforms a list of independent `Token`s into a list of other expressions.
+"""
+
 from pt_law_parser import observers
 from pt_law_parser.tokenizer import tokenize
 
@@ -40,7 +45,11 @@ class ObserverManager(object):
 
 
 def parse(string, managers, terms=set()):
-    result = []
+    """
+    Parses a string into a list of expressions. Uses managers to replace `Token`s
+    by other elements.
+    """
+    result = []  # the end result
 
     for manager in managers:
         terms |= manager.terms

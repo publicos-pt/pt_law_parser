@@ -1,5 +1,12 @@
-class BaseElement():
+"""
+Contains all elements of this package. They act as the formal elements of the law.
+"""
 
+
+class BaseElement(object):
+    """
+    Defines the interface of all elements.
+    """
     def as_html(self):
         raise NotImplementedError
 

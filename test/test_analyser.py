@@ -4,9 +4,27 @@ import unittest
 from pt_law_downloader import get_publication
 
 from pt_law_parser.normalizer import normalize
-from pt_law_parser.analyser import parse, analyse
+from pt_law_parser.analyser import analyse
 from pt_law_parser.html import html_toc, valid_html
 from pt_law_parser.json import from_json
+from pt_law_parser import parser
+from pt_law_parser.observers import DocumentRefObserver, ArticleRefObserver
+
+
+def parse(text):
+    type_names = ['Decreto-Lei', 'Lei', 'Declaração de Rectificação', 'Portaria']
+
+    managers = parser.common_managers + [
+        parser.ObserverManager(dict((name, DocumentRefObserver)
+                                    for name in type_names)),
+        parser.ObserverManager(dict((name, ArticleRefObserver)
+                                    for name in ['artigo', 'artigos']))]
+
+    terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
+    for manager in managers:
+        terms |= manager.terms
+
+    return parser.parse(text, managers, terms)
 
 
 def _expected(file):

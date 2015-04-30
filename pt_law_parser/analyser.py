@@ -1,26 +1,13 @@
+"""
+Contains the function `analyse`, that transforms a linear sequence of expressions
+into a tree structure of sections.
+"""
 from pt_law_parser.expressions import Annex, Part, Title, Chapter, Section, \
     SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, \
     Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection
-from pt_law_parser import observers, parser
 
 hierarchy_order = [
     Annex, Part, Title, Chapter, Section, SubSection, Article, Number, Line]
-
-
-def parse(text):
-    type_names = ['Decreto-Lei', 'Lei', 'Declaração de Rectificação', 'Portaria']
-
-    managers = parser.common_managers + [
-        parser.ObserverManager(dict((name, observers.DocumentRefObserver)
-                                    for name in type_names)),
-        parser.ObserverManager(dict((name, observers.ArticleRefObserver)
-                                    for name in ['artigo', 'artigos']))]
-
-    terms = {' ', '.', ',', '\n', 'n.os', '«', '»'}
-    for manager in managers:
-        terms |= manager.terms
-
-    return parser.parse(text, managers, terms)
 
 
 def analyse(tokens):
