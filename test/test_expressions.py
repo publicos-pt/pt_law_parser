@@ -1,7 +1,6 @@
 import unittest
 
-
-from pt_law_parser.core.expressions import DocumentReference, Token
+from pt_law_parser.expressions import DocumentReference, Token
 
 
 class TestDocument(unittest.TestCase):

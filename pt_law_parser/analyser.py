@@ -1,7 +1,7 @@
-from pt_law_parser.core.expressions import Annex, Part, Title, Chapter, Section, \
+from pt_law_parser.expressions import Annex, Part, Title, Chapter, Section, \
     SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, \
     Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection
-from pt_law_parser.core import parser, observers
+from pt_law_parser import observers, parser
 
 hierarchy_order = [
     Annex, Part, Title, Chapter, Section, SubSection, Article, Number, Line]

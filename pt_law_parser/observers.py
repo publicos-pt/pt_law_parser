@@ -1,6 +1,6 @@
 import re
 
-from .expressions import Token, DocumentReference, ArticleReference, \
+from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, EULawReference, \
     Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor
 

@@ -1,4 +1,4 @@
-from pt_law_parser.core.expressions import Document, TitledDocumentSection
+from pt_law_parser.expressions import Document, TitledDocumentSection
 
 
 class BaseElement(object):

@@ -1,7 +1,7 @@
 import unittest
 
-from pt_law_parser.core.expressions import Token
-from pt_law_parser.core.tokenizer import tokenize
+from pt_law_parser.expressions import Token
+from pt_law_parser.tokenizer import tokenize
 
 
 class TestCase(unittest.TestCase):

@@ -1,6 +1,6 @@
 from collections import defaultdict
 
-from .expressions import Token
+from pt_law_parser.expressions import Token
 
 
 def tokenize(string, keyterms=()):

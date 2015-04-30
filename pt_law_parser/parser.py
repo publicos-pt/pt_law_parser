@@ -1,5 +1,5 @@
-from pt_law_parser.core import observers
-from .tokenizer import tokenize
+from pt_law_parser import observers
+from pt_law_parser.tokenizer import tokenize
 
 
 class ObserverManager(object):

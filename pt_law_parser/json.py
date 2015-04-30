@@ -1,4 +1,4 @@
-from pt_law_parser.core import expressions
+from pt_law_parser import expressions
 
 
 def from_json(data):

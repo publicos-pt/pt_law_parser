@@ -1,10 +1,10 @@
 import unittest
 
-from pt_law_parser.core.expressions import Token, DocumentReference, ArticleReference, \
+from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, Article, Number, Line, EULawReference, Annex
-from pt_law_parser.core import parser
-from pt_law_parser.core.parser import ObserverManager
-from pt_law_parser.core.observers import DocumentRefObserver, NumberRefObserver, \
+from pt_law_parser import parser
+from pt_law_parser.parser import ObserverManager
+from pt_law_parser.observers import DocumentRefObserver, NumberRefObserver, \
     LineRefObserver, ArticleRefObserver, EULawRefObserver, UnnumberedAnnexObserver
 from pt_law_parser.normalizer import replace_eu_links
 
