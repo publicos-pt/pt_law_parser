@@ -52,8 +52,8 @@ def tokenize(string, keyterms=()):
             if term == current_string:
                 matches.add(term)
 
-        # create a set of candidates
-        candidates = set()
+        # pick the longest candidate, if any
+        candidate = None
         for match in matches:
             assert match in string_usages
             assert match in usages
@@ -66,11 +66,12 @@ def tokenize(string, keyterms=()):
                     break
             if invalid:
                 continue
-            candidates.add(match)
 
-        if candidates:
-            # pick the longest candidate
-            term = sorted(list(candidates), key=lambda x: len(x), reverse=True)[0]
+            if not candidate or len(match) > len(candidate):
+                candidate = match
+
+        if candidate:
+            term = candidate
             prefix, suffix = str(sequence).rsplit(term, 1)
 
             if prefix:
