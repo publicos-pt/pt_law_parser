@@ -55,7 +55,7 @@ class TestCase(unittest.TestCase):
 
         # useful to store the result
         #with open('s.html', 'w') as f:
-        #    f.write(html)
+        #    f.write(valid_html(result.as_html()))
 
         self.assertEqual(_expected(expected_file),
                          valid_html(result.as_html()))
@@ -80,7 +80,7 @@ class TestCase(unittest.TestCase):
 
         # useful to store the result
         #with open('s.html', 'w') as f:
-        #    f.write(html)
+        #    f.write(valid_html(result.as_html()))
 
         self.assertEqual(_expected('%d.html' % publication['dre_id']),
                          valid_html(result.as_html()))
@@ -104,6 +104,9 @@ class TestCase(unittest.TestCase):
 
         # test recursive search for references: 15 unique references
         self.assertEqual(15, len(result.get_doc_refs()))
+
+    def test_no_title(self):
+        self._compare_texts('no_title.txt', 'no_title.html')
 
     def test_basic(self):
         result = self._compare_texts('basic.txt', 'basic.html')

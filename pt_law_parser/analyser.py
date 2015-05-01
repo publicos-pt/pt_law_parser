@@ -58,8 +58,7 @@ class HierarchyParser():
 
     def _add_element_to_hierarchy(self, element, format):
         """
-        Adds element of format `format_to_move` to the format above in the
-        hierarchy, if any.
+        Adds `element` to the `format` in the hierarchy, if any.
         """
         for index in reversed(range(hierarchy_order.index(format))):
             format_to_receive = hierarchy_order[index]
@@ -80,7 +79,15 @@ class HierarchyParser():
     def add(self, element):
         for format in reversed(hierarchy_order):
             if self.current_element[format] is not None:
-                self.current_element[format].append(element)
+                # decide if we add paragraph as title or not.
+                needs_title = (isinstance(self.current_element[format],
+                                          TitledDocumentSection) and
+                               self.current_element[format].title is None and
+                               len(self.current_element[format]) == 0)
+                if isinstance(element, Paragraph) and needs_title:
+                    self.current_element[format].title = element
+                else:
+                    self.current_element[format].append(element)
                 break
         else:
             self.root.append(element)

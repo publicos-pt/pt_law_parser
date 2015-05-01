@@ -262,20 +262,16 @@ class BaseDocumentSection(BaseElement):
             element._parent_section = self
         self._children.append(element)
 
-    def __getitem__(self, item):
-        return self._children[item]
-
     def __len__(self):
         return len(self._children)
 
     def as_str(self):
         return ''.join(child.as_str() for child in self._children)
 
-    @staticmethod
-    def _as_html(children):
+    def as_html(self):
         string = ''
         ol = False
-        for child in children:
+        for child in self._children:
             if not ol and isinstance(child, InlineDocumentSection):
                 string += '<ol>'
                 ol = True
@@ -288,9 +284,6 @@ class BaseDocumentSection(BaseElement):
             string += '</ol>'
 
         return string
-
-    def as_html(self):
-        return self._as_html(self._children)
 
     def as_json(self):
         return {self.__class__.__name__: [child.as_json() for child in
@@ -367,14 +360,19 @@ class DocumentSection(BaseDocumentSection):
         Number: 'number list-unstyled',
         Line: 'line list-unstyled'}
 
-    def __init__(self, *children):
-        assert(isinstance(children[0], Anchor))
+    def __init__(self, anchor, *children):
         super(DocumentSection, self).__init__(*children)
-        self.anchor.reference = self
+        self._anchor = anchor
+        self._anchor.reference = self
+
+    def as_json(self):
+        json = super(DocumentSection, self).as_json()
+        json[self.__class__.__name__].insert(0, self.anchor.as_json())
+        return json
 
     @property
     def anchor(self):
-        return self[0]
+        return self._anchor
 
     @property
     def format(self):
@@ -401,6 +399,16 @@ class DocumentSection(BaseDocumentSection):
 
 class TitledDocumentSection(DocumentSection):
 
+    def __init__(self, anchor, *children, title=None):
+        super(TitledDocumentSection, self).__init__(anchor, *children)
+        self._title = title
+
+    def as_json(self):
+        json = super(TitledDocumentSection, self).as_json()
+        if self._title is not None:
+            json[self.__class__.__name__].append(self._title.as_json())
+        return json
+
     hierarchy_html_titles = {
         Part: 'h2',
         Annex: 'h2',
@@ -411,30 +419,45 @@ class TitledDocumentSection(DocumentSection):
         Article: 'h5'}
 
     def as_html(self):
-        inner = self._as_html(self._children[:2])
+        inner = self.anchor.as_html()
+        if self._title is not None:
+            inner += self._title.as_html()
         container = self._build_html(self.hierarchy_html_titles[self.format],
                                      inner, {'class': 'title'})
-        rest = self._as_html(self._children[2:])
+        rest = super(TitledDocumentSection, self).as_html()
 
         return self._build_html('div', container + rest,
                                 {'class': self.html_classes[self.format],
                                  'id': self.id_as_html()})
 
+    def as_str(self):
+        string = self.anchor.as_str()
+        if self._title is not None:
+            string += self._title.as_str()
+        return string + super(TitledDocumentSection, self).as_str()
+
     @property
     def title(self):
-        return self.anchor.as_str() + ' ' + self._children[1].as_str()
+        return self._title
+
+    @title.setter
+    def title(self, title):
+        assert(isinstance(title, Paragraph))
+        self._title = title
 
 
 class InlineDocumentSection(DocumentSection):
     html_lists = {Number: 'li', Line: 'li'}
 
     def as_html(self):
-        first = self._as_html(self._children[:1])
-        container = self._build_html('span', first, {})
-        rest = self._as_html(self._children[1:])
+        container = self._build_html('span', self.anchor.as_html(), {})
+        rest = super(InlineDocumentSection, self).as_html()
         return self._build_html('li', container + rest,
                                 {'class': self.html_classes[self.format],
                                  'id': self.id_as_html()})
+
+    def as_str(self):
+        return self.anchor.as_str() + super(InlineDocumentSection, self).as_str()
 
 
 class QuotationSection(BaseDocumentSection):

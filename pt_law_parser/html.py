@@ -56,11 +56,12 @@ def html_toc(document):
             return None
 
         for child in titles:
-            name = child.title
-            anchor = child.anchor
+            name = child.anchor.as_str()
+            if child.title is not None:
+                name += ' ' + child.title.as_str()
 
-            if anchor.ref_as_href():
-                tag = Element('a', {'href': anchor.ref_as_href()})
+            if child.anchor.ref_as_href():
+                tag = Element('a', {'href': child.anchor.ref_as_href()})
             else:
                 tag = Element('h5', {'class': 'tree-toggler'})
             tag.append(name)
