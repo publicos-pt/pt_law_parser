@@ -1,6 +1,6 @@
 import unittest
 
-from pt_law_parser.expressions import DocumentReference, Token, Anchor
+from pt_law_parser.expressions import DocumentReference, Token, Anchor, Annex
 
 
 class TestDocument(unittest.TestCase):
@@ -15,3 +15,7 @@ class TestDocument(unittest.TestCase):
 
     def test_not_equal(self):
         self.assertNotEqual(Token('bla'), Anchor('bla'))
+
+    def test_annex(self):
+        self.assertEqual('Anexo I\n', Annex('I').as_str())
+        self.assertEqual('Anexo\n', Annex('').as_str())
