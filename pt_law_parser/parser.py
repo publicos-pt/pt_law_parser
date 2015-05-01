@@ -12,36 +12,46 @@ class ObserverManager(object):
         self._rules = rules
         self._observers = {}
 
+        # A cache, see _refresh_items. This optimization was pre-profiled.
+        # It save us ~30% on analysing doc_id=640339.
+        self._items = {}
+
+    def _refresh_items(self):
+        self._items = sorted(dict(self._observers).items(), reverse=True)
+
     def generate(self, index, token):
         if token.as_str() in self._rules:
             observer = self._rules[token.as_str()](index, token)
             self._observers[index] = observer
+            self._refresh_items()
 
     @property
     def terms(self):
         return set(self._rules.keys())
 
-    def _items(self):
-        return sorted(dict(self._observers).items(), reverse=True)
-
     def observe(self, index, token, caught):
-        for i, observer in self._items():
+        for i, observer in self._items:
             caught = observer.observe(index, token, caught) or caught
         return caught
 
     def replace_in(self, result):
-        for i, observer in self._items():
+        did_change = False
+        for i, observer in self._items:
             if observer.is_done:
                 if observer.needs_replace:
                     observer.replace_in(result)
                 del self._observers[i]
+                did_change = True
+        if did_change:
+            self._refresh_items()
 
     def finish(self, result):
-        for i, observer in self._items():
+        for i, observer in self._items:
             observer.finish()
             if observer.needs_replace:
                 observer.replace_in(result)
             del self._observers[i]
+        self._refresh_items()
 
 
 def parse(string, managers, terms=set()):
