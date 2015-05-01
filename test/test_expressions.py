@@ -1,6 +1,6 @@
 import unittest
 
-from pt_law_parser.expressions import DocumentReference, Token
+from pt_law_parser.expressions import DocumentReference, Token, Anchor
 
 
 class TestDocument(unittest.TestCase):
@@ -12,3 +12,6 @@ class TestDocument(unittest.TestCase):
 
         self.assertEqual('<a href="http://www.example.com">2/2002</a>',
                          doc.as_html())
+
+    def test_not_equal(self):
+        self.assertNotEqual(Token('bla'), Anchor('bla'))
