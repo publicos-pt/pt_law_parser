@@ -1,4 +1,4 @@
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 
 setup(name='pt-law-parser',
@@ -15,4 +15,6 @@ setup(name='pt-law-parser',
           'Topic :: Utilities',
       ],
       install_requires=['pt_law_downloader'],
+      ext_modules=[Extension("pt_law_parser._tokenizer",
+                             ["pt_law_parser/tokenizer.cpp"])]
 )
