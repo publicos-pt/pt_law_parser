@@ -1,6 +1,32 @@
 """
 Contains all elements of this package. They act as the formal elements of the law.
 """
+import json
+import sys
+
+
+def from_json(data):
+    def _decode(data_dict):
+        values = []
+        if isinstance(data_dict, str):
+            return data_dict
+
+        assert(len(data_dict) == 1)
+        klass_string = next(iter(data_dict.keys()))
+        klass = getattr(sys.modules[__name__], klass_string)
+
+        args = []
+        for e in data_dict[klass_string]:
+            x = _decode(e)
+            if isinstance(x, str):
+                args.append(x)
+            else:
+                args += x
+        values.append(klass(*args))
+
+        return values
+
+    return _decode(json.loads(data))[0]
 
 
 class BaseElement(object):
@@ -13,15 +39,18 @@ class BaseElement(object):
     def as_str(self):
         raise NotImplementedError
 
-    def as_json(self):
+    def as_dict(self):
         raise NotImplementedError
+
+    def as_json(self):
+        return json.dumps(self.as_dict())
 
     def __repr__(self):
         return '<%s %s>' % (self.__class__.__name__, repr(self.as_str()))
 
     def __eq__(self, other):
         if isinstance(other, self.__class__):
-            return self.as_json() == other.as_json()
+            return self.as_dict() == other.as_dict()
         else:
             return False
 
@@ -53,7 +82,7 @@ class Token(BaseElement):
     def as_html(self):
         return self.as_str()
 
-    def as_json(self):
+    def as_dict(self):
         return {self.__class__.__name__: [self.as_str()]}
 
     @property
@@ -75,10 +104,10 @@ class Reference(Token):
     def as_html(self):
         return self._build_html('a', self.as_str(), {})
 
-    def as_json(self):
+    def as_dict(self):
         r = {self.__class__.__name__: [self.number]}
         if self.parent:
-            r[self.__class__.__name__].append(self.parent.as_json())
+            r[self.__class__.__name__].append(self.parent.as_dict())
         return r
 
     @property
@@ -112,8 +141,8 @@ class DocumentReference(Reference):
             return self._build_html('a', self.as_str(), {'href': self._href})
         return super(DocumentReference, self).as_html()
 
-    def as_json(self):
-        r = super(DocumentReference, self).as_json()
+    def as_dict(self):
+        r = super(DocumentReference, self).as_dict()
         if self._href:
             r[self.__class__.__name__].append(self._href)
         return r
@@ -165,7 +194,7 @@ class Anchor(Token):
     def as_str(self):
         return '%s %s\n' % (self.name, self.number)
 
-    def as_json(self):
+    def as_dict(self):
         return {self.__class__.__name__: [self.number]}
 
     @property
@@ -285,8 +314,8 @@ class BaseDocumentSection(BaseElement):
 
         return string
 
-    def as_json(self):
-        return {self.__class__.__name__: [child.as_json() for child in
+    def as_dict(self):
+        return {self.__class__.__name__: [child.as_dict() for child in
                                           self._children]}
 
     def find_all(self, condition, recursive=False):
@@ -365,9 +394,9 @@ class DocumentSection(BaseDocumentSection):
         self._anchor = anchor
         self._anchor.reference = self
 
-    def as_json(self):
-        json = super(DocumentSection, self).as_json()
-        json[self.__class__.__name__].insert(0, self.anchor.as_json())
+    def as_dict(self):
+        json = super(DocumentSection, self).as_dict()
+        json[self.__class__.__name__].insert(0, self.anchor.as_dict())
         return json
 
     @property
@@ -403,10 +432,10 @@ class TitledDocumentSection(DocumentSection):
         super(TitledDocumentSection, self).__init__(anchor, *children)
         self._title = title
 
-    def as_json(self):
-        json = super(TitledDocumentSection, self).as_json()
+    def as_dict(self):
+        json = super(TitledDocumentSection, self).as_dict()
         if self._title is not None:
-            json[self.__class__.__name__].append(self._title.as_json())
+            json[self.__class__.__name__].append(self._title.as_dict())
         return json
 
     hierarchy_html_titles = {

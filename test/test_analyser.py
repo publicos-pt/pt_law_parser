@@ -6,7 +6,7 @@ from pt_law_downloader import get_publication
 from pt_law_parser.normalizer import normalize
 from pt_law_parser.analyser import analyse
 from pt_law_parser.html import html_toc, valid_html
-from pt_law_parser.json import from_json
+from pt_law_parser.expressions import from_json
 from pt_law_parser import parser
 from pt_law_parser.observers import DocumentRefObserver, ArticleRefObserver
 
