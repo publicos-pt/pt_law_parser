@@ -428,14 +428,14 @@ class DocumentSection(BaseDocumentSection):
 
 class TitledDocumentSection(DocumentSection):
 
-    def __init__(self, anchor, *children, title=None):
+    def __init__(self, anchor, title=None, *children):
         super(TitledDocumentSection, self).__init__(anchor, *children)
         self._title = title
 
     def as_dict(self):
         json = super(TitledDocumentSection, self).as_dict()
         if self._title is not None:
-            json[self.__class__.__name__].append(self._title.as_dict())
+            json[self.__class__.__name__].insert(1, self._title.as_dict())
         return json
 
     hierarchy_html_titles = {
