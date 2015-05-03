@@ -215,6 +215,7 @@ class GenericRuleObserver(Observer):
 
     def observe(self, index, token, caught):
         if not self._is_valid[0]:
+            print(token.as_str())
             assert(self._rules[0](token.as_str()))
             self._is_valid[0] = True
             return
@@ -241,7 +242,8 @@ class EULawRefObserver(GenericRuleObserver):
     A concrete observer for EU laws.
     """
     _rules = [lambda x: x in ('Diretiva', 'Decisão de Execução',
-                              'Regulamento (CE)'),
+                              'Regulamento (CE)', 'Regulamento CE',
+                              'Regulamento CEE'),
               lambda x: x == ' ', lambda x: x == 'nº', lambda x: x == ' ',
               lambda x: re.match(EULAW_NUMBER_REGEX, x)]
 
