@@ -165,10 +165,13 @@ class EULawReference(Reference):
     @staticmethod
     def _build_eu_url(name, number):
         # example: '2000/29/CE'
-        year, iden, _ = number.split('/')
+        year, iden = number.split('/')[:2]
         label = {'Diretiva': 'L',
-                 'Decisão de Execução': 'D'}[name]
-        # regulation missing, e.g. 31992R2081
+                 'Decisão de Execução': 'D',
+                 'Regulamento (CE)': 'R'}[name]
+
+        if label == 'R':
+            year, iden = iden, year
 
         eur_id = '3%s%s%04d' % (year, label, int(iden))
 

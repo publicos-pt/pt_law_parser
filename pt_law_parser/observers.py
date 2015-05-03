@@ -13,7 +13,7 @@ DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/(?:\d{4}|\d{2})(?:/[A-Z]{1})?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
 NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_NUMBER_REGEX
 LINE_REGEX = '^%s$' % BASE_LINE_REGEX
-EULAW_NUMBER_REGEX = '^\d{4}/\d+/(?:CE|UE)$'
+EULAW_NUMBER_REGEX = '^\d{4}/\d+(?:/CE|/UE)?$'
 
 
 class Observer(object):
@@ -206,7 +206,8 @@ class GenericRuleObserver(Observer):
 
 
 class EULawRefObserver(GenericRuleObserver):
-    _rules = [lambda x: x in ('Diretiva', 'Decisão de Execução'),
+    _rules = [lambda x: x in ('Diretiva', 'Decisão de Execução',
+                              'Regulamento (CE)'),
               lambda x: x == ' ', lambda x: x == 'nº', lambda x: x == ' ',
               lambda x: re.match(EULAW_NUMBER_REGEX, x)]
 
