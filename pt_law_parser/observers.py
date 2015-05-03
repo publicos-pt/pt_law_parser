@@ -254,7 +254,7 @@ def common_rules(name, regex):
 
 class ArticleObserver(AnchorObserver):
     anchor_klass = Article
-    _rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX)
+    _rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX + '|único')
     number_at = 3
     take_up_to = 5
 

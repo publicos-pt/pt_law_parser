@@ -260,6 +260,9 @@ class TestAnchorArticle(GeneralTestCase):
         line = Article('1º')
         self._test('\nArtigo 1º\n', managers, [(line, 1)])
 
+        line = Article('único')
+        self._test('\nArtigo único\n', managers, [(line, 1)])
+
 
 class TestAnchorNumber(GeneralTestCase):
 
