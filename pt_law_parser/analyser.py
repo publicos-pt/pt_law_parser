@@ -3,11 +3,13 @@ Contains the function `analyse`, that transforms a linear sequence of expression
 into a tree structure of sections.
 """
 from pt_law_parser.expressions import Annex, Part, Title, Chapter, Section, \
-    SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, \
+    SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, Clause, \
     Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection
 
 hierarchy_order = [
-    Annex, Part, Title, Chapter, Section, SubSection, Article, Number, Line]
+    Annex, Part, Title, Chapter, Section, SubSection, Clause, Article, Number,
+    Line,
+]
 
 
 def analyse(tokens):

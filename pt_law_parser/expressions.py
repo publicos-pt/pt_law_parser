@@ -229,6 +229,13 @@ class SubSection(Anchor):
     name = 'Sub-Secção'
 
 
+class Clause(Anchor):
+    name = 'Clausula'
+
+    def as_str(self):
+        return '%s\n' % self.number
+
+
 class Part(Anchor):
     name = 'Parte'
 
@@ -385,6 +392,7 @@ class DocumentSection(BaseDocumentSection):
         Chapter: 'chapter',
         Section: 'section',
         SubSection: 'sub-section',
+        Clause: 'clause',
         Article: 'article',
         Number: 'number list-unstyled',
         Line: 'line list-unstyled'}
@@ -445,7 +453,8 @@ class TitledDocumentSection(DocumentSection):
         Chapter: 'h3',
         Section: 'h4',
         SubSection: 'h5',
-        Article: 'h5'}
+        Article: 'h5',
+        Clause: 'h5'}
 
     def as_html(self):
         inner = self.anchor.as_html()

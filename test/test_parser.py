@@ -1,11 +1,13 @@
 import unittest
 
 from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, Article, Number, Line, EULawReference, Annex
+    NumberReference, LineReference, Article, Number, Line, EULawReference, Annex, \
+    Clause
 from pt_law_parser import parser
 from pt_law_parser.parser import ObserverManager
 from pt_law_parser.observers import DocumentRefObserver, NumberRefObserver, \
-    LineRefObserver, ArticleRefObserver, EULawRefObserver, UnnumberedAnnexObserver
+    LineRefObserver, ArticleRefObserver, EULawRefObserver, UnnumberedAnnexObserver, \
+    ClauseObserver
 from pt_law_parser.normalizer import replace_eu_links
 
 
@@ -262,6 +264,21 @@ class TestAnchorArticle(GeneralTestCase):
 
         line = Article('único')
         self._test('\nArtigo único\n', managers, [(line, 1)])
+
+
+class TestAnchorClause(GeneralTestCase):
+
+    def test_simple(self):
+        managers = [ObserverManager({'\n': ClauseObserver})]
+        result = parser.parse('\nIV\n', managers, {'\n'})
+
+        self.assertEqual([Token('\n'), Clause('IV'), Token('')], result)
+
+    def test_fail(self):
+        managers = [ObserverManager({'\n': ClauseObserver})]
+        result = parser.parse('\nImagina\n', managers, {'\n'})
+
+        self.assertEqual([Token('\n'), Token('Imagina'), Token('\n')], result)
 
 
 class TestAnchorNumber(GeneralTestCase):

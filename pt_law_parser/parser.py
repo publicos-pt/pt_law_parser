@@ -86,6 +86,7 @@ common_managers = [
     ObserverManager({'\n': observers.UnnumberedAnnexObserver}),
     ObserverManager({'\n': observers.SectionObserver}),
     ObserverManager({'\n': observers.SubSectionObserver}),
+    ObserverManager({'\n': observers.ClauseObserver}),
     ObserverManager({'\n': observers.PartObserver}),
     ObserverManager({'\n': observers.TitleObserver}),
     ObserverManager({'\n': observers.ChapterObserver}),

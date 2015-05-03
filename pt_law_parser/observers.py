@@ -1,7 +1,7 @@
 import re
 
 from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
-    NumberReference, LineReference, EULawReference, \
+    NumberReference, LineReference, EULawReference, Clause, \
     Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor
 
 
@@ -262,6 +262,14 @@ class ArticleObserver(AnchorObserver):
 class SubSectionObserver(ArticleObserver):
     anchor_klass = SubSection
     _rules = common_rules(SubSection.name, '[IVX]*')
+
+
+class ClauseObserver(ArticleObserver):
+    anchor_klass = Clause
+    _rules = [lambda x: x == '\n', lambda x: re.match('^[IVX]*$', x),
+              lambda x: x == '\n']
+    number_at = 1
+    take_up_to = 2
 
 
 class SectionObserver(ArticleObserver):

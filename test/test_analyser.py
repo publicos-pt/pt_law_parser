@@ -54,8 +54,8 @@ class TestCase(unittest.TestCase):
         result = analyse(parse(normalized))
 
         # useful to store the result
-        #with open('s.html', 'w') as f:
-        #    f.write(valid_html(result.as_html()))
+        with open('s.html', 'w') as f:
+            f.write(valid_html(result.as_html()))
 
         self.assertEqual(_expected(expected_file),
                          valid_html(result.as_html()))
@@ -107,6 +107,9 @@ class TestCase(unittest.TestCase):
 
     def test_no_title(self):
         self._compare_texts('no_title.txt', 'no_title.html')
+
+    def test_clause(self):
+        self._compare_texts('clause.txt', 'clause.html')
 
     def test_basic(self):
         result = self._compare_texts('basic.txt', 'basic.html')
