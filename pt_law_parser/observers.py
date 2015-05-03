@@ -241,7 +241,7 @@ class AnchorObserver(GenericRuleObserver):
 
     def replace_in(self, result):
         assert(self._number_index == self._index + self.number_at)
-        for i in reversed(range(2, self.take_up_to)):
+        for i in reversed(range(2, self.take_up_to + 1)):
             result[self._index + i] = Token('')  # '\n'
         result[self._index + 1] = self.anchor_klass(self._number)
 
@@ -256,7 +256,7 @@ class ArticleObserver(AnchorObserver):
     anchor_klass = Article
     _rules = common_rules(Article.name, BASE_ARTICLE_NUMBER_REGEX + '|único')
     number_at = 3
-    take_up_to = 5
+    take_up_to = 4
 
 
 class SubSectionObserver(ArticleObserver):
@@ -302,7 +302,7 @@ class NumberObserver(AnchorObserver):
     _rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
              lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
     number_at = 1
-    take_up_to = 4
+    take_up_to = 3
 
 
 class LineObserver(AnchorObserver):
@@ -310,4 +310,4 @@ class LineObserver(AnchorObserver):
     _rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
               lambda x: x == ' ']
     number_at = 1
-    take_up_to = 2
+    take_up_to = 1
