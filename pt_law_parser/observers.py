@@ -1,8 +1,14 @@
+"""
+This module contains Observers: entities used in the parser to interpret sequences
+of tokens into elements.
+"""
+
 import re
 
 from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, EULawReference, Clause, \
-    Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor
+    Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor, \
+    Reference
 
 
 BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
@@ -18,12 +24,21 @@ EULAW_NUMBER_REGEX = '^\d{4}/\d+(?:/CE|/UE)?$'
 
 class Observer(object):
     """
-    An object that observes the tokenization and change its own state accordingly.
+    A generic object that observes a list of tokens and change its own state
+    accordingly. Works like a state machine where the list of tokens is the tape.
 
-    Contains an `index` that identifies its position in the list of tokens.
-    Uses `is_done` to indicate that its observation is completed and
-    `needs_replace` to indicate whether it requires replacing itself in the list
-     of tokens using `replace_in`.
+    Initialize it with the `index` that identifies its position in the list of
+    tokens and respective `token`.
+
+    Use `observe` with a new index and new token. Its final state is a tuple of
+    booleans (`is_done`, `needs_replace`):
+
+    * `is_done` indicates that its observation is completed and thus it is ready
+      to be deleted;
+    * `needs_replace` indicates whether it requires replacing itself in the list
+      of tokens using `replace_in` or not.
+
+    Use `finish` to finalise its activity (i.e. sets `is_done=True`)
     """
     def __init__(self, index, token):
         self._string = token.as_str()
@@ -59,7 +74,10 @@ class Observer(object):
 
 
 class RefObserver(Observer):
-    klass = DocumentReference
+    """
+    A generic Observer for references.
+    """
+    klass = Reference
 
     def __init__(self, index, token):
         super(RefObserver, self).__init__(index, token)
@@ -71,7 +89,6 @@ class RefObserver(Observer):
         if self._parent is not None:
             parent = result[self._parent]
         for i in self._numbers:
-
             result[i] = self.klass(self._numbers[i].as_str(), parent)
 
     def finish(self):
@@ -172,6 +189,15 @@ class LineRefObserver(ArticleRefObserver):
 
 
 class GenericRuleObserver(Observer):
+    """
+    A generic observer that uses a strict match of a sequence of tokens to
+    find matches. It is similar to a regex sub.
+
+    The class attribute `_rules` is a list of functions that accept one string
+    argument and return a bool. The observer `needs_replace` when all its rules
+    were valid. The first rule must return True when for the token the observer
+    is initialized.
+    """
     _rules = []
 
     def __init__(self, index, token):
@@ -180,6 +206,11 @@ class GenericRuleObserver(Observer):
         self._is_valid = [False for _ in range(len(self._rules))]
 
     def _gather(self, index, token, rule):
+        """
+        This function is called on every `observe` and can be overwritten to
+        store relevant tokens. `index` and `token` are the parameters of the
+        observe, `rule` is the index of current rule. By default does nothing.
+        """
         pass
 
     def observe(self, index, token, caught):
@@ -206,6 +237,9 @@ class GenericRuleObserver(Observer):
 
 
 class EULawRefObserver(GenericRuleObserver):
+    """
+    A concrete observer for EU laws.
+    """
     _rules = [lambda x: x in ('Diretiva', 'Decisão de Execução',
                               'Regulamento (CE)'),
               lambda x: x == ' ', lambda x: x == 'nº', lambda x: x == ' ',
@@ -226,9 +260,15 @@ class EULawRefObserver(GenericRuleObserver):
 
 
 class AnchorObserver(GenericRuleObserver):
+    """
+    A generic observer for anchors. `anchor_klass` is the class this observer
+    replaces `Token` by, `number_at` is the `rule` of the number of the anchor,
+    if any, and `take_up_to` is the index up to which Tokens are removed from
+    `result`. See subclasses for concrete examples.
+    """
     anchor_klass = Anchor
     number_at = None
-    take_up_to = None
+    take_up_to = 0
 
     def __init__(self, index, token):
         super(AnchorObserver, self).__init__(index, token)

@@ -54,8 +54,8 @@ class TestCase(unittest.TestCase):
         result = analyse(parse(normalized))
 
         # useful to store the result
-        with open('s.html', 'w') as f:
-            f.write(valid_html(result.as_html()))
+        #with open('s.html', 'w') as f:
+        #    f.write(valid_html(result.as_html()))
 
         self.assertEqual(_expected(expected_file),
                          valid_html(result.as_html()))

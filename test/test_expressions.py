@@ -21,7 +21,6 @@ class TestDocument(unittest.TestCase):
         self.assertEqual('Anexo I\n', Annex('I').as_str())
         self.assertEqual('Anexo\n', Annex('').as_str())
 
-
     def test_eu_law(self):
         ref = EULawReference('1222/2009', Token('Regulamento (CE)'))
 

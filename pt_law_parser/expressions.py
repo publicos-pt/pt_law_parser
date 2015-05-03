@@ -6,6 +6,9 @@ import sys
 
 
 def from_json(data):
+    """
+    Reconstructs any `BaseElement` from its own `.as_json()`. Returns the element.
+    """
     def _decode(data_dict):
         values = []
         if isinstance(data_dict, str):
@@ -34,15 +37,27 @@ class BaseElement(object):
     Defines the interface of all elements.
     """
     def as_html(self):
+        """
+        How the element converts itself to HTML.
+        """
         raise NotImplementedError
 
     def as_str(self):
+        """
+        How the element converts itself to simple text.
+        """
         raise NotImplementedError
 
     def as_dict(self):
+        """
+        How the element converts itself to a dictionary.
+        """
         raise NotImplementedError
 
     def as_json(self):
+        """
+        How the element converts itself to JSON. Not to be overwritten.
+        """
         return json.dumps(self.as_dict())
 
     def __repr__(self):
@@ -71,7 +86,9 @@ class BaseElement(object):
 
 
 class Token(BaseElement):
-
+    """
+    A simple string.
+    """
     def __init__(self, string):
         assert isinstance(string, str)
         self._string = string
@@ -91,6 +108,10 @@ class Token(BaseElement):
 
 
 class Reference(Token):
+    """
+    A generic reference to anything. Contains a number (str) and a parent, which
+    must be either `None` or a `Token` (or a subclass of `Token`).
+    """
     def __init__(self, number, parent=None):
         super(Reference, self).__init__(number)
         assert isinstance(number, str)
@@ -120,6 +141,10 @@ class Reference(Token):
 
 
 class DocumentReference(Reference):
+    """
+    A concrete Reference to a document. Contains an href that identifies where
+    it points to, as well as a `set_href` to set it.
+    """
 
     def __init__(self, number, parent, href=''):
         super(DocumentReference, self).__init__(number, parent)
@@ -161,7 +186,9 @@ class ArticleReference(Reference):
 
 
 class EULawReference(Reference):
-
+    """
+    A reference to EU law. Its href is built from its name and number.
+    """
     @staticmethod
     def _build_eu_url(name, number):
         # example: '2000/29/CE'
@@ -188,6 +215,9 @@ class EULawReference(Reference):
 
 
 class Anchor(Token):
+    """
+    A generic anchor that defines a section that can be referred to.
+    """
     name = None
 
     def __init__(self, string):
