@@ -195,7 +195,9 @@ class EULawReference(Reference):
         year, iden = number.split('/')[:2]
         label = {'Diretiva': 'L',
                  'Decisão de Execução': 'D',
-                 'Regulamento (CE)': 'R'}[name]
+                 'Regulamento (CE)': 'R',
+                 'Regulamento CE': 'R',
+                 'Regulamento CEE': 'R'}[name]
 
         if label == 'R':
             year, iden = iden, year
