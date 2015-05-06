@@ -215,7 +215,6 @@ class GenericRuleObserver(Observer):
 
     def observe(self, index, token, caught):
         if not self._is_valid[0]:
-            print(token.as_str())
             assert(self._rules[0](token.as_str()))
             self._is_valid[0] = True
             return
