@@ -76,6 +76,9 @@ class TestCase(unittest.TestCase):
         except IOError:
             pass
 
+        #with open('s.txt', 'w') as f:
+        #    f.write(normalized)
+
         result = analyse(parse(normalized))
 
         # useful to store the result
@@ -124,6 +127,14 @@ class TestCase(unittest.TestCase):
 
     def test_json(self):
         self._test_json('basic.txt')
+
+    def test_69982738(self):
+        """
+        This document caused an error because it contained a reserved token
+        for an itemization.
+        """
+        publication = get_publication(69982738)
+        self._test(publication)
 
 
 class TestToc(unittest.TestCase):

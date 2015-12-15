@@ -2,7 +2,7 @@ import unittest
 
 from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, Article, Number, Line, EULawReference, Annex, \
-    Clause
+    Clause, Item
 from pt_law_parser import parser
 from pt_law_parser.parser import ObserverManager
 from pt_law_parser.observers import DocumentRefObserver, NumberRefObserver, \
@@ -297,6 +297,15 @@ class TestAnchorLine(GeneralTestCase):
 
         line = Line('a)')
         self._test('\na) test\n', managers, [(line, 1)])
+
+
+class TestAnchorItem(GeneralTestCase):
+
+    def test_simple(self):
+        managers = parser.common_managers
+
+        item = Item('»')
+        self._test('\n» test\n', managers, [(item, 1)])
 
 
 class TestAnnex(GeneralTestCase):

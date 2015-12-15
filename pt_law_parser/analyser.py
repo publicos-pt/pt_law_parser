@@ -3,13 +3,17 @@ Contains the function `analyse`, that transforms a linear sequence of expression
 into a tree structure of sections.
 """
 from pt_law_parser.expressions import Annex, Part, Title, Chapter, Section, \
-    SubSection, Article, Number, Line, Paragraph, Anchor, QuotationSection, Clause, \
-    Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection
+    SubSection, Article, Number, Line, Item, Paragraph, Anchor, QuotationSection, Clause, \
+    Document, InlineParagraph, InlineDocumentSection, TitledDocumentSection, \
+    Token, UnorderedDocumentSection, OrderedDocumentSection
 
 hierarchy_order = [
     Annex, Part, Title, Chapter, Section, SubSection, Clause, Article, Number,
-    Line,
+    Line, Item,
 ]
+
+# formats that only take one paragraph
+single_paragraph_format = {Item}
 
 
 def analyse(tokens):
@@ -22,27 +26,37 @@ def analyse(tokens):
         if token.as_str() == '':
             continue
         # start of quote
-        if token.string == '«' and len(paragraph) == 0:
+        if token == Token('«') and len(paragraph) == 0:
             block_mode = True
             block_parser = HierarchyParser(QuotationSection(), add_links=False)
         # end of quote
-        elif token.string == '»' and len(paragraph) == 0:
+        elif token == Token('»') and len(paragraph) == 0:
             block_mode = False
             root_parser.add(block_parser.root)
             paragraph = Paragraph()
         # construct the paragraphs
+        # paragraph can end by '\n' or by starting a new section.
         elif isinstance(token, Anchor) or token.string == '\n':
+            # it is end of paragraph; complete it if it ends by a normal \n.
             if token.string == '\n':
                 paragraph.append(token)
+
+            # select current parser
             p = root_parser
             if block_mode:
                 p = block_parser
+
+            # add paragraph to the current parser if it is not empty
             if len(paragraph):
                 p.add(paragraph)
 
+            # start a new paragraph
             paragraph = Paragraph()
             if isinstance(token, Anchor):
+                # create a new section
                 section = p.new_section(token)
+
+                # if new new section is inline, change to inline paragraph
                 if isinstance(section, InlineDocumentSection):
                     paragraph = InlineParagraph()
         else:
@@ -53,8 +67,8 @@ def analyse(tokens):
 
 class HierarchyParser():
     def __init__(self, root, add_links=True):
-        self.current_element = dict([(element, None) for
-                                     element in hierarchy_order])
+        self.current_element = dict([(format, None) for
+                                     format in hierarchy_order])
         self.root = root
         self._add_links = add_links
 
@@ -75,8 +89,10 @@ class HierarchyParser():
     def _create_section(anchor):
         if anchor.format in TitledDocumentSection.hierarchy_html_titles:
             return TitledDocumentSection(anchor)
-        elif anchor.format in InlineDocumentSection.html_lists:
-            return InlineDocumentSection(anchor)
+        elif anchor.format in OrderedDocumentSection.formats:
+            return OrderedDocumentSection(anchor)
+        elif anchor.format in UnorderedDocumentSection.formats:
+            return UnorderedDocumentSection(anchor)
 
     def add(self, element):
         for format in reversed(hierarchy_order):
@@ -90,6 +106,8 @@ class HierarchyParser():
                     self.current_element[format].title = element
                 else:
                     self.current_element[format].append(element)
+                    if format in single_paragraph_format:
+                        self.current_element[format] = None
                 break
         else:
             self.root.append(element)

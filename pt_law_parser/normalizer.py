@@ -59,6 +59,12 @@ def normalize(text):
                   lambda m: "<p>%s -" % m.group(1),
                   text)
 
+    # normalize bullets of the form `# -# - ...` (e.g. `<p>7 -2 - bla`)
+    #
+    text = re.sub(r"<p>(\d+) -([\d.]+) -",
+                  lambda m: "<p>%s-%s -" % m.group(1, 2),
+                  text)
+
     text = text.replace('.º', 'º')
 
     # remove <p> and replace </p> by '\n' so we are working on pure text.

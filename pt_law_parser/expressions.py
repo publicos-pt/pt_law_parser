@@ -320,6 +320,16 @@ class Line(Number):
         return '%s' % self.number
 
 
+class Item(Number):
+    """
+    An item of an unordered list.
+    """
+    name = 'Item'
+
+    def as_str(self):
+        return '%s' % self.number
+
+
 class BaseDocumentSection(BaseElement):
 
     def __init__(self, *children):
@@ -342,17 +352,28 @@ class BaseDocumentSection(BaseElement):
     def as_html(self):
         string = ''
         ol = False
+        ul = False
         for child in self._children:
-            if not ol and isinstance(child, InlineDocumentSection):
+            if ul and not isinstance(child, UnorderedDocumentSection):
+                string += '</ul>'
+                ul = False
+            if ol and not isinstance(child, OrderedDocumentSection):
+                string += '</ol>'
+                ol = False
+
+            if not ul and isinstance(child, UnorderedDocumentSection):
+                string += '<ul>'
+                ul = True
+            if not ol and isinstance(child, OrderedDocumentSection):
                 string += '<ol>'
                 ol = True
+
             string += child.as_html()
-            # this never happens so far.
-            #if ol and not isinstance(child, InlineDocumentSection):
-            #    string += '</ol>'
-            #    ol = False
+
         if ol:
             string += '</ol>'
+        if ul:
+            string += '</ul>'
 
         return string
 
@@ -418,7 +439,7 @@ class Document(BaseDocumentSection):
 
 
 class DocumentSection(BaseDocumentSection):
-    formal_sections = [Annex, Article, Number, Line]
+    formal_sections = [Annex, Article, Number, Line, Item]
 
     html_classes = {
         Annex: 'annex',
@@ -430,7 +451,9 @@ class DocumentSection(BaseDocumentSection):
         Clause: 'clause',
         Article: 'article',
         Number: 'number list-unstyled',
-        Line: 'line list-unstyled'}
+        Line: 'line list-unstyled',
+        Item: 'item list-unstyled',
+    }
 
     def __init__(self, anchor, *children):
         super(DocumentSection, self).__init__(*children)
@@ -489,7 +512,8 @@ class TitledDocumentSection(DocumentSection):
         Section: 'h4',
         SubSection: 'h5',
         Article: 'h5',
-        Clause: 'h5'}
+        Clause: 'h5',
+    }
 
     def as_html(self):
         inner = self.anchor.as_html()
@@ -520,7 +544,10 @@ class TitledDocumentSection(DocumentSection):
 
 
 class InlineDocumentSection(DocumentSection):
-    html_lists = {Number: 'li', Line: 'li'}
+    """
+    A section whose elements are inline.
+    """
+    formats = {}
 
     def as_html(self):
         container = self._build_html('span', self.anchor.as_html(), {})
@@ -531,6 +558,20 @@ class InlineDocumentSection(DocumentSection):
 
     def as_str(self):
         return self.anchor.as_str() + super(InlineDocumentSection, self).as_str()
+
+
+class OrderedDocumentSection(InlineDocumentSection):
+    """
+    A section whose elements are inline and ordered.
+    """
+    formats = {Number, Line}
+
+
+class UnorderedDocumentSection(InlineDocumentSection):
+    """
+    A section whose elements are inline and un-ordered.
+    """
+    formats = {Item}
 
 
 class QuotationSection(BaseDocumentSection):

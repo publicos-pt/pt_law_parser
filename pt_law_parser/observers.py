@@ -8,12 +8,13 @@ import re
 from pt_law_parser.expressions import Token, DocumentReference, ArticleReference, \
     NumberReference, LineReference, EULawReference, Clause, \
     Article, Number, Line, Annex, Title, Chapter, Part, Section, SubSection, Anchor, \
-    Reference
+    Reference, Item
 
 
 BASE_ARTICLE_NUMBER_REGEX = '[\dA-Z\-]+º(?:\-[A-Z]+)?'
-BASE_NUMBER_REGEX = '\d'
+BASE_NUMBER_REGEX = r'^[-\.\d]*$'
 BASE_LINE_REGEX = '[\da-z]*\)'
+BASE_ITEM_REGEX = '[.»]'
 
 DOCUMENT_NUMBER_REGEX = '^[\d\-A-Z]+/(?:\d{4}|\d{2})(?:/[A-Z]{1})?$'
 ARTICLE_NUMBER_REGEX = '^%s$|^anterior$|^seguinte$' % BASE_ARTICLE_NUMBER_REGEX
@@ -350,7 +351,7 @@ class TitleObserver(ArticleObserver):
 class NumberObserver(AnchorObserver):
     anchor_klass = Number
     _rules = [lambda x: x == '\n', lambda x: re.match(BASE_NUMBER_REGEX, x),
-             lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
+              lambda x: x == ' ', lambda x: x == '-', lambda x: x == ' ']
     number_at = 1
     take_up_to = 3
 
@@ -358,6 +359,14 @@ class NumberObserver(AnchorObserver):
 class LineObserver(AnchorObserver):
     anchor_klass = Line
     _rules = [lambda x: x == '\n', lambda x: re.match(BASE_LINE_REGEX, x),
+              lambda x: x == ' ']
+    number_at = 1
+    take_up_to = 1
+
+
+class ItemObserver(AnchorObserver):
+    anchor_klass = Item
+    _rules = [lambda x: x == '\n', lambda x: re.match(BASE_ITEM_REGEX, x),
               lambda x: x == ' ']
     number_at = 1
     take_up_to = 1
